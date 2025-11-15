@@ -431,18 +431,53 @@
     <script type="module">
         // --- Firebase Config ---
         // These global variables are provided by the environment
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}'); // <-- DELETED
+        // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // <-- DELETED
+        // const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // <-- DELETED
+
+        // --- FOR GITHUB PAGES: Uncomment this section and paste your keys ---
+        // const firebaseConfig = { // <-- DELETED
+        //     apiKey: "PASTE_YOUR_API_KEY_HERE", // <-- DELETED
+        //     authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE", // <-- DELETED
+        //     projectId: "PASTE_YOUR_PROJECT_ID_HERE", // <-- DELETED
+        //     storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE", // <-- DELETED
+        //     messagingSenderId: "PASTE_YOUR_SENDER_ID_HERE", // <-- DELETED
+        //     appId: "PASTE_YOUR_APP_ID_HERE" // <-- DELETED
+        // }; // <-- DELETED
+        // // Use your project ID as the app ID // <-- DELETED
+        // const appId = firebaseConfig.projectId; // <-- DELETED
+        // ------------------------------------------
+
         
         // --- Firebase Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBN9HfXy4k2HIVGklUtk5fMA8yyX9RZH2g",
+            authDomain: "softball-scorecard.firebaseapp.com",
+            projectId: "softball-scorecard",
+            storageBucket: "softball-scorecard.firebasestorage.app",
+            messagingSenderId: "749570093852",
+            appId: "1:749570093852:web:d1f4ad5e1261637dfd40d9",
+            measurementId: "G-27TEBB943P"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // --- App-Specific Firebase Imports (Added back) ---
         import { 
             getAuth, 
             signInAnonymously, 
-            signInWithCustomToken, 
             onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
@@ -455,10 +490,10 @@
             collection, 
             query,
             setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
         // --- Firebase Initialization ---
-        let app, db, auth, userId, rosterCollectionRef;
+        let db, auth, userId, rosterCollectionRef; // app is now defined above
         let unsubscribeRoster = () => {}; // Function to stop the listener
         
         // --- App State ---
@@ -1387,7 +1422,7 @@
         
         async function initializeAppAndAuth() {
             try {
-                app = initializeApp(firebaseConfig);
+                // app = initializeApp(firebaseConfig); // <-- DELETED (already initialized)
                 db = getFirestore(app);
                 auth = getAuth(app);
                 setLogLevel('Debug'); // Enable Firestore logging
@@ -1398,7 +1433,10 @@
                         userId = user.uid;
                         DOMElements.userIdDisplay.textContent = userId;
                         // User is signed in, set up Firestore references and listener
-                        rosterCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/roster`);
+                        
+                        // --- IMPORTANT: This path is now simpler for your personal app ---
+                        rosterCollectionRef = collection(db, `users/${userId}/roster`);
+                        
                         setupRosterListener();
                     } else {
                         console.log("User is not authenticated.");
@@ -1411,13 +1449,13 @@
                 });
 
                 // Sign in
-                if (initialAuthToken) {
-                    console.log("Signing in with custom token...");
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
+                // if (initialAuthToken) { // <-- DELETED
+                //     console.log("Signing in with custom token..."); // <-- DELETED
+                //     await signInWithCustomToken(auth, initialAuthToken); // <-- DELETED
+                // } else { // <-- DELETED
                     console.log("Signing in anonymously...");
                     await signInAnonymously(auth);
-                }
+                // } // <-- DELETED
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
@@ -1606,10 +1644,7 @@
                 }
             });
             
-            // Remove old ball/strike/out click listeners
-            // The elements no longer have the 'cursor-pointer' class, but good to be sure
-            // DOMElements.balls.forEach(ball => ball.replaceWith(ball.cloneNode(true))); // <-- BUG: This broke the reference
-            // DOMElements.strikes.forEach(strike => strike.replaceWith(strike.cloneNode(true))); // <-- BUG: This broke the reference
+            // --- BUG FIX: Removed lines that broke ball/strike UI ---
             
             // We'll leave the 'out' listener for manual setting
             DOMElements.outs.forEach((out, i) => {
