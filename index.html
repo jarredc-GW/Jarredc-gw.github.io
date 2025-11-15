@@ -29,9 +29,18 @@
         .invalid-order {
             border: 2px dashed #ef4444 !important;
         }
+        /* Make diamond responsive */
+        .diamond-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
         .baseball-diamond {
             width: 100%;
-            max-width: 500px;
+            max-width: 400px; /* Max size for diamond */
             aspect-ratio: 1 / 1;
             position: relative;
         }
@@ -67,21 +76,21 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 0.75rem; /* Increased font size */
+            font-size: 0.75rem;
             font-weight: 700;
             color: white;
-            padding: 2px 5px; /* Increased padding */
+            padding: 2px 5px;
             background-color: rgba(0, 0, 0, 0.6);
             border-radius: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 120%; /* Allow to be slightly wider */
-            display: none; /* Hidden by default */
+            max-width: 120%;
+            display: none;
             z-index: 10;
         }
         .base.active .base-runner-name {
-            display: block; /* Shown when base is active */
+            display: block;
         }
 
         #home-plate { bottom: 5%; left: 42.5%; }
@@ -95,9 +104,9 @@
 
         /* Prevent text selection */
         .prevent-select {
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10 and IE 11 */
-            user-select: none; /* Standard syntax */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         /* Roster Toggle Transition */
@@ -210,8 +219,8 @@
     <!-- Main Content -->
     <div class="flex flex-col md:flex-row md:h-full md:overflow-hidden">
         
-        <!-- Left Column: Rosters & Batting Order -->
-        <div class="w-full md:w-1/2 lg:w-2/5 xl:w-1/3 p-4 flex flex-col bg-white shadow-lg md:h-full md:overflow-y-auto">
+        <!-- Left Column: Rosters & Batting Order (1/2 screen) -->
+        <div class="w-full md:w-1/2 p-4 flex flex-col bg-white shadow-lg md:h-full md:overflow-y-auto">
             
             <!-- Roster Management -->
             <div class="mb-4">
@@ -296,130 +305,138 @@
 
         </div>
         
-        <!-- Right Column: Scoreboard & Diamond -->
-        <div class="w-full md:w-1/2 lg:w-3/5 xl:w-2/3 p-4 flex flex-col md:h-full md:overflow-hidden">
+        <!-- Right Column (1/2 screen) - NEW LAYOUT -->
+        <div class="w-full md:w-1/2 p-2 flex flex-col md:h-full">
             
-            <!-- Scoreboard -->
-            <div class="bg-white rounded-lg shadow-xl p-4 mb-4">
-                <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Scoreboard</h2>
+            <!-- Top-Right Quadrant (Scoreboard + Controls) -->
+            <div class="flex flex-col md:flex-row md:h-1/2">
                 
-                <!-- Scores -->
-                <div class="grid grid-cols-2 gap-4 mb-4 text-center">
-                    <div>
-                        <div id="home-label" class="text-lg font-semibold text-blue-700">HOME</div>
-                        <div id="home-score" class="text-6xl font-bold text-blue-700">0</div>
-                    </div>
-                    <div>
-                        <div id="guest-label" class="text-lg font-semibold text-gray-500">GUEST</div>
-                        <div id="guest-score" class="text-6xl font-bold text-gray-700">0</div>
+                <!-- Scoreboard (1/8 total) -->
+                <div class="w-full md:w-1/2 p-2">
+                    <div class="bg-white rounded-lg shadow-xl p-3 h-full flex flex-col">
+                        <h2 class="text-xl font-bold text-center text-gray-800 mb-2">Scoreboard</h2>
+                        <!-- Scores -->
+                        <div class="grid grid-cols-2 gap-2 mb-2 text-center">
+                            <div>
+                                <div id="home-label" class="text-base font-semibold text-blue-700">HOME</div>
+                                <div id="home-score" class="text-5xl font-bold text-blue-700">0</div>
+                            </div>
+                            <div>
+                                <div id="guest-label" class="text-lg font-semibold text-gray-500">GUEST</div>
+                                <div id="guest-score" class="text-5xl font-bold text-gray-700">0</div>
+                            </div>
+                        </div>
+                        <!-- Counters -->
+                        <div class="flex-grow flex justify-around items-center p-2 bg-gray-100 rounded-lg">
+                            <!-- Inning -->
+                            <div id="inning-toggle" class="text-center cursor-pointer" title="Click to toggle Top/Bottom">
+                                <div class="text-xs font-medium text-gray-500 mb-1">INN</div>
+                                <div class="flex items-center space-x-1 justify-center">
+                                    <div id="inning" class="text-xl font-semibold w-6">1</div>
+                                    <span id="inning-indicator" class="text-2xl font-bold text-gray-700">&uarr;</span>
+                                </div>
+                            </div>
+                            <!-- Runs -->
+                            <div class="text-center">
+                                <div class="text-xs font-medium text-gray-500 mb-1">RUNS</div>
+                                <div id="runs-this-inning" class="text-xl font-semibold text-green-600">0</div>
+                            </div>
+                            <!-- Balls -->
+                            <div class="text-center">
+                                <div class="text-xs font-medium text-gray-500 mb-1">BALLS</div>
+                                <div class="flex space-x-1.5 justify-center">
+                                    <span class="ball w-4 h-4 bg-gray-300 rounded-full"></span>
+                                    <span class="ball w-4 h-4 bg-gray-300 rounded-full"></span>
+                                    <span class="ball w-4 h-4 bg-gray-300 rounded-full"></span>
+                                    <span class="ball w-4 h-4 bg-gray-300 rounded-full"></span>
+                                </div>
+                            </div>
+                            <!-- Strikes -->
+                            <div class="text-center">
+                                <div class="text-xs font-medium text-gray-500 mb-1">STRIKES</div>
+                                <div class="flex space-x-1.5 justify-center">
+                                    <span class="strike w-4 h-4 bg-gray-300 rounded-full"></span>
+                                    <span class="strike w-4 h-4 bg-gray-300 rounded-full"></span>
+                                    <span class="strike w-4 h-4 bg-gray-300 rounded-full"></span>
+                                </div>
+                            </div>
+                            <!-- Outs -->
+                            <div class="text-center">
+                                <div class="text-xs font-medium text-gray-500 mb-1">OUTS</div>
+                                <div class="flex space-x-1.5 justify-center">
+                                    <span class="out w-4 h-4 bg-gray-300 rounded-full cursor-pointer"></span>
+                                    <span class="out w-4 h-4 bg-gray-300 rounded-full cursor-pointer"></span>
+                                    <span class="out w-4 h-4 bg-gray-300 rounded-full cursor-pointer"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Counters -->
-                <div class="flex justify-around items-center p-3 bg-gray-100 rounded-lg">
-                    <!-- Inning -->
-                    <div id="inning-toggle" class="text-center cursor-pointer" title="Click to toggle Top/Bottom">
-                        <div class="text-sm font-medium text-gray-500 mb-1">INNING</div>
-                        <div class="flex items-center space-x-1 justify-center">
-                            <div id="inning" class="text-2xl font-semibold w-8">1</div>
-                            <span id="inning-indicator" class="text-3xl font-bold text-gray-700">&uarr;</span>
+
+                <!-- Batting Controls (1/8 total) -->
+                <div class="w-full md:w-1/2 p-2">
+                    <div class="bg-white rounded-lg shadow-xl p-3 h-full flex flex-col justify-between">
+                        <div class="grid grid-cols-3 gap-2">
+                            <button id="btn-walk" class="py-3 px-2 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Walk</button>
+                            <button id="btn-hit" class="py-3 px-2 text-base font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">Hit</button>
+                            <button id="btn-out" class="py-3 px-2 text-base font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">Out</button>
                         </div>
-                    </div>
-                    <!-- Runs this Inning -->
-                    <div class="text-center">
-                        <div class="text-sm font-medium text-gray-500 mb-1">RUNS</div>
-                        <div id="runs-this-inning" class="text-2xl font-semibold text-green-600">0</div>
-                    </div>
-                    <!-- Balls -->
-                    <div class="text-center">
-                        <div class="text-sm font-medium text-gray-500 mb-1">BALLS</div>
-                        <div class="flex space-x-2 justify-center">
-                            <span class="ball w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="ball w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="ball w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="ball w-5 h-5 bg-gray-300 rounded-full"></span>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button id="btn-add-ball" class="w-full py-3 px-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">Add Ball</button>
+                            <button id="btn-add-strike" class="w-full py-3 px-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">Add Strike</button>
                         </div>
-                    </div>
-                    <!-- Strikes -->
-                    <div class="text-center">
-                        <div class="text-sm font-medium text-gray-500 mb-1">STRIKES</div>
-                        <div class="flex space-x-2 justify-center">
-                            <span class="strike w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="strike w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="strike w-5 h-5 bg-gray-300 rounded-full"></span>
-                        </div>
-                    </div>
-                    <!-- Outs -->
-                    <div class="text-center">
-                        <div class="text-sm font-medium text-gray-500 mb-1">OUTS</div>
-                        <div class="flex space-x-2 justify-center">
-                            <span class="out w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="out w-5 h-5 bg-gray-300 rounded-full"></span>
-                            <span class="out w-5 h-5 bg-gray-300 rounded-full"></span>
-                        </div>
+                        <button id="btn-end-game" class="w-full mt-2 py-2 px-4 text-base font-medium text-white bg-red-700 rounded-lg hover:bg-red-800 transition-colors">
+                            End Game
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Batting Controls -->
-            <div class="bg-white rounded-lg shadow-xl p-4 mb-4">
-                <div class="grid grid-cols-3 gap-3">
-                    <button id="btn-walk" class="py-3 px-4 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Walk</button>
-                    <button id="btn-hit" class="py-3 px-4 text-lg font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">Hit</button>
-                    <button id="btn-out" class="py-3 px-4 text-lg font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">Out</button>
-                </div>
-                <button id="btn-next-batter" class="w-full mt-3 py-3 px-4 text-lg font-medium text-gray-800 bg-yellow-400 rounded-lg hover:bg-yellow-500 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed">
-                    Next Batter
-                </button>
-                <div class="grid grid-cols-2 gap-3 mt-3">
-                    <button id="btn-add-ball" class="w-full py-2 px-4 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">Add Ball</button>
-                    <button id="btn-add-strike" class="w-full py-2 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">Add Strike</button>
-                </div>
-            </div>
-            
-            <!-- Baseball Diamond -->
-            <div class="flex-grow flex items-center justify-center bg-white rounded-lg shadow-xl p-4 overflow-hidden relative">
-                <div class="baseball-diamond">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0">
-                        <!-- Infield Grass -->
-                        <path d="M 50 10 L 90 50 L 50 90 L 10 50 Z" fill="#689f38" stroke="#a5d6a7" stroke-width="1"/>
-                        <!-- Baselines -->
-                        <path d="M 50 90 L 90 50 L 50 10 L 10 50 Z" fill="none" stroke="#d2b48c" stroke-width="2"/>
-                        <!-- Pitcher's Mound -->
-                        <circle cx="50" cy="50" r="8" fill="#d2b48c" opacity="0.6"/>
-                    </svg>
+            <!-- Bottom-Right Quadrant (Diamond) -->
+            <div class="w-full p-2 flex-grow md:h-1/2">
+                <div class="bg-white rounded-lg shadow-xl w-full h-full flex items-center justify-center overflow-hidden relative diamond-container">
+                    <div class="baseball-diamond">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0">
+                            <!-- Infield Grass -->
+                            <path d="M 50 10 L 90 50 L 50 90 L 10 50 Z" fill="#689f38" stroke="#a5d6a7" stroke-width="1"/>
+                            <!-- Baselines -->
+                            <path d="M 50 90 L 90 50 L 50 10 L 10 50 Z" fill="none" stroke="#d2b48c" stroke-width="2"/>
+                            <!-- Pitcher's Mound -->
+                            <circle cx="50" cy="50" r="8" fill="#d2b48c" opacity="0.6"/>
+                        </svg>
 
-                    <!-- Home Plate -->
-                    <div id="home-plate" class="base">
-                        <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
-                            <path d="M 10 10 L 90 10 L 90 50 L 50 90 L 10 50 Z"/>
-                        </svg>
-                        <span class="base-label">Home</span>
-                        <span class="base-runner-name"></span>
-                    </div>
-                    <!-- First Base -->
-                    <div id="first-base" class="base">
-                        <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
-                            <rect width="100" height="100"/>
-                        </svg>
-                        <span class="base-label">First</span>
-                        <span class="base-runner-name"></span>
-                    </div>
-                    <!-- Second Base -->
-                    <div id="second-base" class="base">
-                        <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
-                            <rect width="100" height="100"/>
-                        </svg>
-                        <span class="base-label">Second</span>
-                        <span class="base-runner-name"></span>
-                    </div>
-                    <!-- Third Base -->
-                    <div id="third-base" class="base">
-                        <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
-                            <rect width="100" height="100"/>
-                        </svg>
-                        <span class="base-label">Third</span>
-                        <span class="base-runner-name"></span>
+                        <!-- Home Plate -->
+                        <div id="home-plate" class="base">
+                            <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
+                                <path d="M 10 10 L 90 10 L 90 50 L 50 90 L 10 50 Z"/>
+                            </svg>
+                            <span class="base-label">Home</span>
+                            <span class="base-runner-name"></span>
+                        </div>
+                        <!-- First Base -->
+                        <div id="first-base" class="base">
+                            <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
+                                <rect width="100" height="100"/>
+                            </svg>
+                            <span class="base-label">First</span>
+                            <span class="base-runner-name"></span>
+                        </div>
+                        <!-- Second Base -->
+                        <div id="second-base" class="base">
+                            <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
+                                <rect width="100" height="100"/>
+                            </svg>
+                            <span class="base-label">Second</span>
+                            <span class="base-runner-name"></span>
+                        </div>
+                        <!-- Third Base -->
+                        <div id="third-base" class="base">
+                            <svg viewBox="0 0 100 100" class="base-icon" fill="#e0e0e0">
+                                <rect width="100" height="100"/>
+                            </svg>
+                            <span class="base-label">Third</span>
+                            <span class="base-runner-name"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -430,19 +447,27 @@
     <!-- Firebase -->
     <script type="module">
         // --- Firebase Config ---
-        // These global variables are provided by the environment
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBN9HfXy4k2HIVGklUtk5fMA8yyX9RZH2g",
+            authDomain: "softball-scorecard.firebaseapp.com",
+            projectId: "softball-scorecard",
+            storageBucket: "softball-scorecard.firebasestorage.app",
+            messagingSenderId: "749570093852",
+            appId: "1:749570093852:web:d1f4ad5e1261637dfd40d9",
+            measurementId: "G-27TEBB943P"
+        };
+        // Use your project ID as the app ID
+        const appId = firebaseConfig.projectId;
         
         // --- Firebase Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"; // Reverted to preview version
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
         import { 
             getAuth, 
             signInAnonymously, 
-            signInWithCustomToken, 
             onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"; // Reverted to preview version
+        } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
@@ -455,10 +480,12 @@
             collection, 
             query,
             setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Reverted to preview version
+        } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
         // --- Firebase Initialization ---
-        let app, db, auth, userId, rosterCollectionRef;
+        let db, auth, userId, rosterCollectionRef;
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         let unsubscribeRoster = () => {}; // Function to stop the listener
         
         // --- App State ---
@@ -524,7 +551,7 @@
             btnWalk: document.getElementById('btn-walk'),
             btnHit: document.getElementById('btn-hit'),
             btnOut: document.getElementById('btn-out'),
-            btnNextBatter: document.getElementById('btn-next-batter'),
+            btnEndGame: document.getElementById('btn-end-game'),
             btnAddBall: document.getElementById('btn-add-ball'),
             btnAddStrike: document.getElementById('btn-add-strike'),
             rosterList: document.getElementById('roster-list'),
@@ -573,7 +600,7 @@
             DOMElements.inning.textContent = gameState.inning;
             DOMElements.runsThisInning.textContent = gameState.runsThisInning;
             DOMElements.inningIndicator.innerHTML = gameState.topOfInning ? '&uarr;' : '&darr;';
-            DOMElements.inningIndicator.className = `text-3xl font-bold ${gameState.topOfInning ? 'text-gray-700' : 'text-blue-700'}`;
+            DOMElements.inningIndicator.className = `text-2xl font-bold ${gameState.topOfInning ? 'text-gray-700' : 'text-blue-700'}`;
             
             // Highlight user's team label
             DOMElements.homeLabel.classList.toggle('ring-2', gameState.userTeam === 'home');
@@ -962,7 +989,7 @@
 
             gameState.battingOrder.traditional.forEach((player, index) => {
                 const card = createBattingOrderCard(player);
-                if (shouldHighlight && gameState.gameMode === 'traditional' && index === gameState.currentBatterIndex.traditional % gameState.battingOrder.traditional.length) {
+                if (shouldHighlight && gameState.gameMode === 'traditional' && index === gameState.currentBatterIndex.traditional % (gameState.battingOrder.traditional.length || 1) ) {
                     card.classList.add('bg-yellow-200', 'ring-2', 'ring-yellow-500');
                 }
                 DOMElements.battingOrderList.appendChild(card);
@@ -970,7 +997,7 @@
 
             gameState.battingOrder.male.forEach((player, index) => {
                 const card = createBattingOrderCard(player);
-                if (shouldHighlight && gameState.gameMode === 'wheel' && gameState.nextToBat === 'male' && index === gameState.currentBatterIndex.male % gameState.battingOrder.male.length) {
+                if (shouldHighlight && gameState.gameMode === 'wheel' && gameState.nextToBat === 'male' && index === gameState.currentBatterIndex.male % (gameState.battingOrder.male.length || 1)) {
                     card.classList.add('bg-yellow-200', 'ring-2', 'ring-yellow-500');
                 }
                 DOMElements.battingOrderListMale.appendChild(card);
@@ -978,7 +1005,7 @@
 
             gameState.battingOrder.female.forEach((player, index) => {
                 const card = createBattingOrderCard(player);
-                if (shouldHighlight && gameState.gameMode === 'wheel' && gameState.nextToBat === 'female' && index === gameState.currentBatterIndex.female % gameState.battingOrder.female.length) {
+                if (shouldHighlight && gameState.gameMode === 'wheel' && gameState.nextToBat === 'female' && index === gameState.currentBatterIndex.female % (gameState.battingOrder.female.length || 1)) {
                     card.classList.add('bg-yellow-200', 'ring-2', 'ring-yellow-500');
                 }
                 DOMElements.battingOrderListFemale.appendChild(card);
@@ -991,7 +1018,7 @@
             if (gameState.gameMode !== 'traditional' || gameState.battingOrder.traditional.length < 2) {
                 DOMElements.battingOrderList.classList.remove('invalid-order');
                 DOMElements.orderWarning.classList.add('hidden');
-                DOMElements.btnNextBatter.disabled = false;
+                //DOMElements.btnNextBatter.disabled = false; // Next batter button is gone
                 return true;
             }
 
@@ -1005,8 +1032,15 @@
 
             DOMElements.battingOrderList.classList.toggle('invalid-order', !isValid);
             DOMElements.orderWarning.classList.toggle('hidden', isValid);
-            DOMElements.btnNextBatter.disabled = !isValid;
+            //DOMElements.btnNextBatter.disabled = !isValid; // Next batter button is gone
             
+            // Disable main controls if order is invalid
+            DOMElements.btnWalk.disabled = !isValid;
+            DOMElements.btnHit.disabled = !isValid;
+            DOMElements.btnOut.disabled = !isValid;
+            DOMElements.btnAddBall.disabled = !isValid;
+            DOMElements.btnAddStrike.disabled = !isValid;
+
             return isValid;
         }
 
@@ -1387,8 +1421,7 @@
         
         async function initializeAppAndAuth() {
             try {
-                // Reverted to preview environment config
-                app = initializeApp(firebaseConfig);
+                // app is already initialized
                 db = getFirestore(app);
                 auth = getAuth(app);
                 setLogLevel('Debug'); // Enable Firestore logging
@@ -1400,8 +1433,8 @@
                         DOMElements.userIdDisplay.textContent = userId;
                         // User is signed in, set up Firestore references and listener
                         
-                        // Reverted to preview environment path
-                        rosterCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/roster`);
+                        // --- IMPORTANT: This path is now simpler for your personal app ---
+                        rosterCollectionRef = collection(db, `users/${userId}/roster`);
                         
                         setupRosterListener();
                     } else {
@@ -1414,14 +1447,9 @@
                     }
                 });
 
-                // Reverted to preview environment auth
-                if (initialAuthToken) {
-                    console.log("Signing in with custom token...");
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    console.log("Signing in anonymously...");
-                    await signInAnonymously(auth);
-                }
+                // Sign in
+                console.log("Signing in anonymously...");
+                await signInAnonymously(auth);
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
@@ -1501,7 +1529,11 @@
             });
             // --- END BUG FIX ---
 
-            DOMElements.btnNextBatter.addEventListener('click', handleNextBatter);
+            // --- NEW: End Game Button ---
+            DOMElements.btnEndGame.addEventListener('click', () => {
+                // Simple reload to reset the game state
+                location.reload(); 
+            });
             
             DOMElements.addPlayerForm.addEventListener('submit', handleRosterSubmit);
             
