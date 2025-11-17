@@ -852,20 +852,17 @@
             return batter ? batter.name.split(' ')[0] : "Batter";
         }
 
+        // --- RUNNER NUMBERING FIX ---
         function getNextRunnerDisplayOrder() {
-            const runners = getAllRunners();
-            if (runners.length === 0) {
-                return 1;
-            }
-            // Find the highest displayOrder on base and add 1
-            const maxOrder = Math.max(...runners.map(r => r.displayOrder));
-            return maxOrder + 1;
+            // This is the number of batters who have COME to the plate this inning
+            return gameState.runnerInningCounter + 1;
         }
         
         function createNewRunner(batter) {
             gameState.runnerInningCounter++; // This is the *original* number
             const batterName = getBatterName(batter);
-            const displayOrder = getNextRunnerDisplayOrder();
+            // Display order IS the inning counter
+            const displayOrder = gameState.runnerInningCounter; 
 
             return {
                 name: batterName,
@@ -873,6 +870,7 @@
                 displayOrder: displayOrder
             };
         }
+        // --- END RUNNER NUMBERING FIX ---
         
         function advanceRunnersOnWalk(batter) {
             const batterName = getBatterName(batter);
@@ -1512,6 +1510,7 @@
             });
         }
         
+        // --- RUNNER NUMBERING FIX ---
         function renumberRunnersOnBase(outRunnerDisplayOrder) {
             // Get all runners on base
             const runnersOnBase = [];
@@ -1521,6 +1520,11 @@
                 }
             }
             
+            // --- NEW LOGIC: Also decrement the inning counter ---
+            // This means the next batter will get the "recycled" number
+            gameState.runnerInningCounter--;
+            // --- END NEW LOGIC ---
+
             // Find all runners with a displayOrder > outRunnerDisplayOrder
             runnersOnBase.forEach(runner => {
                 if (runner.displayOrder > outRunnerDisplayOrder) {
@@ -1530,6 +1534,8 @@
             
             updateBases(); // Update UI with new numbers
         }
+        // --- END RUNNER NUMBERING FIX ---
+
 
         // --- Roster Toggle ---
         function handleRosterToggle() {
