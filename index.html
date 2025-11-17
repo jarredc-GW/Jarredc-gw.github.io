@@ -84,19 +84,19 @@
             display: block; /* Shown when base is active */
         }
 
-        /* --- NEW BASE POSITIONS --- */
+        /* --- FINAL BASE POSITIONS --- */
         #home-plate { bottom: 5%; left: 42.5%; }
         #home-plate .base-label { bottom: -25px; } /* Home label is lower */
         
-        #first-base { bottom: 42.5%; right: 18.75%; } /* Moved slightly outward */
+        #first-base { bottom: 42.5%; right: 18.75%; }
         #first-base .base-label { bottom: -20px; left: 50%; transform: translateX(-50%); }
 
-        #second-base { top: 7.5%; left: 42.5%; } /* Moved further up */
+        #second-base { top: 7.5%; left: 42.5%; } 
         #second-base .base-label { bottom: -20px; left: 50%; transform: translateX(-50%); }
 
-        #third-base { bottom: 42.5%; left: 18.75%; } /* Moved slightly outward */
+        #third-base { bottom: 42.5%; left: 18.75%; }
         #third-base .base-label { bottom: -20px; left: 50%; transform: translateX(-50%); }
-        /* --- END NEW BASE POSITIONS --- */
+        /* --- END FINAL BASE POSITIONS --- */
 
         /* Prevent text selection */
         .prevent-select {
@@ -1068,7 +1068,20 @@
                 const card = createPlayerCard(player);
                 // Only roster list cards should have remove/add buttons
                 card.querySelector('.remove-player').addEventListener('click', handleRemovePlayer);
-                card.querySelector('.add-player-to-order').addEventListener('click', handleAddPlayerToOrder);
+                
+                // --- NEW LOGIC: Hide + if in lineup ---
+                const inTraditional = gameState.battingOrder.traditional.find(p => p.id === player.id);
+                const inMale = gameState.battingOrder.male.find(p => p.id === player.id);
+                const inFemale = gameState.battingOrder.female.find(p => p.id === player.id);
+                const addButton = card.querySelector('.add-player-to-order');
+                
+                if (inTraditional || inMale || inFemale) {
+                    addButton.style.display = 'none'; // Hide the + button
+                } else {
+                    addButton.addEventListener('click', handleAddPlayerToOrder);
+                }
+                // --- END NEW LOGIC ---
+                
                 DOMElements.rosterList.appendChild(card);
             });
         }
@@ -1280,6 +1293,7 @@
                 targetList.push(player);
                 addLogEntry(`Added ${player.name} to lineup.`);
                 renderBattingOrder(); // Update the UI
+                renderRoster(); // --- Re-render roster to hide plus button ---
             }
         }
 
@@ -1432,6 +1446,12 @@
             
             renderBattingOrder();
             addLogEntry(`Batting order updated.`);
+            
+            // --- NEW: Re-render roster if player was added/removed from it ---
+            if (dragSourceListId === 'roster-list' || dropTarget.id === 'roster-list') {
+                renderRoster();
+            }
+            // --- END NEW ---
         }
 
         function getListById(id) {
@@ -1748,7 +1768,7 @@
                 } else {
                     // 3rd strike, trigger an out
                     gameState.strikes = 3;
-                    updateScoreboard(); // <-- FIX: Was misspelled 'updateScorebonew ard()'
+                    updateScoreboard();
                     setTimeout(() => {
                         const batter = getCurrentBatter();
                         const batterName = getBatterName(batter);
