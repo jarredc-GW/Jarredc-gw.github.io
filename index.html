@@ -508,6 +508,7 @@
             gameLog: [],
             gameLogHeight: 200,
             isTransitioning: false,
+            isGameOver: false,
             isEditingOrder: false
         };
 
@@ -602,10 +603,18 @@
             if (type === 'run') colorClass = 'text-green-600 font-medium';
             if (type === 'out') colorClass = 'text-red-600 font-medium';
             if (type === 'inning') colorClass = 'text-blue-600 font-bold';
-            entry.innerHTML = `<span class="font-mono text-xs text-gray-500">[${time}]</span> <span class="${colorClass}">${message}</span>`;
+            
+            const htmlString = `<span class="font-mono text-xs text-gray-500">[${time}]</span> <span class="${colorClass}">${message}</span>`;
+            entry.innerHTML = htmlString;
+            
+            if (!gameState.gameLog) gameState.gameLog = [];
+            gameState.gameLog.unshift({ html: htmlString });
+            if (gameState.gameLog.length > 50) gameState.gameLog.pop(); // Keep log size manageable
+            
             if (DOMElements.gameLogList) {
                 DOMElements.gameLogList.prepend(entry);
             }
+            saveLocalState();
         }
 
         // --- Game Log Resize Logic ---
@@ -701,6 +710,8 @@
             updateCounter(DOMElements.balls, gameState.balls, 'bg-yellow-400');
             updateCounter(DOMElements.strikes, gameState.strikes, 'bg-red-500');
             updateCounter(DOMElements.outs, gameState.outs, 'bg-red-500');
+            
+            saveLocalState();
         }
 
         function updateCounter(elements, count, activeClass) {
@@ -717,9 +728,11 @@
                 if (DOMElements.bases[i]) DOMElements.bases[i].classList.toggle('active', !!runner);
                 if (DOMElements.baseRunners[i]) DOMElements.baseRunners[i].textContent = runner ? `${runner.displayOrder} - ${runner.name}` : '';
             }
+            saveLocalState();
         }
 
         function triggerGameOver(title, message) {
+            gameState.isGameOver = true;
             gameState.isTransitioning = true; // Lock UI interactions
             if (DOMElements.gameOverTitle) DOMElements.gameOverTitle.textContent = title;
             if (DOMElements.gameOverMessage) DOMElements.gameOverMessage.textContent = message;
@@ -728,11 +741,13 @@
         }
 
         function handleInningToggle() {
-            if (gameState.isTransitioning) return;
+            if (gameState.isTransitioning || gameState.isGameOver) return;
             advanceHalfInning();
         }
 
         function advanceHalfInning() {
+            if (gameState.isGameOver) return;
+            
             handleNextBatter(true);
             gameState.outs = 0;
             gameState.runsThisInning = 0;
@@ -1197,6 +1212,8 @@
                 if (DOMElements.battingOrderList) DOMElements.battingOrderList.classList.remove('invalid-order');
                 if (DOMElements.orderWarning) DOMElements.orderWarning.classList.add('hidden');
             }
+            
+            saveLocalState();
         }
 
         function handleNextBatter(skipCountReset = false) {
@@ -1253,8 +1270,9 @@
         document.addEventListener('click', e => {
             if (e.target.closest('.hit-type-btn')) {
                 if (gameState.isTransitioning) return;
-                advanceRunnersOnHit(parseInt(e.target.closest('.hit-type-btn').dataset.hitType));
+                const hitType = parseInt(e.target.closest('.hit-type-btn').dataset.hitType);
                 hideAllModals();
+                advanceRunnersOnHit(hitType);
             }
             if (e.target.id === 'force-out-yes') {
                 if (!gameState.isTransitioning) return;
@@ -1262,13 +1280,13 @@
                 gameState.runsThisInning -= loss;
                 if (gameState.topOfInning) gameState.awayScore -= loss; else gameState.homeScore -= loss;
                 addLogEntry(`Force out: Runs negated (-${loss}).`, 'out');
-                advanceHalfInning();
                 hideAllModals();
+                advanceHalfInning();
             }
             if (e.target.id === 'force-out-no') {
                 if (!gameState.isTransitioning) return;
-                advanceHalfInning();
                 hideAllModals();
+                advanceHalfInning();
             }
         });
 
@@ -1397,7 +1415,10 @@
                         const b = parseInt(modal.id.split('-').pop());
                         const action = e.target.dataset.action;
                         const r = gameState.bases[b];
-                        if (!r) { hideAllModals(); return; }
+                        
+                        hideAllModals();
+                        
+                        if (!r) { return; }
 
                         if (action === 'move') {
                             const target = parseInt(e.target.dataset.base);
@@ -1427,7 +1448,6 @@
                             renumberRunnersOnBase(r.displayOrder);
                         }
                         updateBases();
-                        hideAllModals();
                     };
                 });
             }
@@ -1440,9 +1460,12 @@
                     if (DOMElements.userIdDisplay) DOMElements.userIdDisplay.textContent = userId;
                     rosterCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/roster`);
                     unsubscribeRoster = onSnapshot(rosterCollectionRef, snap => {
-                        gameState.roster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        renderRoster();
-                        renderBattingOrder();
+                        // Protect offline locally saved roster from getting overwritten by an empty online cache
+                        if (!snap.empty || gameState.roster.length === 0) {
+                            gameState.roster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            renderRoster();
+                            renderBattingOrder();
+                        }
                     });
                 }
             });
@@ -1492,6 +1515,8 @@
                 }
                 DOMElements.rosterList.appendChild(el);
             });
+            
+            saveLocalState();
         }
 
         if (DOMElements.addPlayerForm) {
@@ -1608,11 +1633,13 @@
              gameState.currentBatterIndex = { traditional: 0, male: 0, female: 0 };
              gameState.gameLog = [];
              gameState.isTransitioning = false;
+             gameState.isGameOver = false;
              if (DOMElements.gameLogList) DOMElements.gameLogList.innerHTML = '';
              
              updateScoreboard();
              updateBases();
              renderBattingOrder();
+             saveLocalState();
              
              hideAllModals();
              if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal);
@@ -1629,10 +1656,51 @@
         if (DOMElements.endGameNoBtn) DOMElements.endGameNoBtn.onclick = hideAllModals;
         if (DOMElements.gameOverCloseBtn) DOMElements.gameOverCloseBtn.onclick = resetGame;
 
+        // --- Local Storage Functions ---
+        function saveLocalState() {
+            localStorage.setItem('softball_gameState', JSON.stringify(gameState));
+        }
+
+        function loadLocalState() {
+            const saved = localStorage.getItem('softball_gameState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    gameState = { ...gameState, ...parsed };
+                    gameState.isTransitioning = false; // Prevent locking on refresh
+                } catch (e) {
+                    console.error('Error parsing local storage:', e);
+                }
+            }
+        }
+
+        function renderGameLog() {
+            if (!DOMElements.gameLogList) return;
+            DOMElements.gameLogList.innerHTML = '';
+            if (!gameState.gameLog) gameState.gameLog = [];
+            gameState.gameLog.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = 'p-2 rounded bg-white shadow-sm';
+                entry.innerHTML = log.html;
+                DOMElements.gameLogList.appendChild(entry);
+            });
+        }
+
         function init() {
+            loadLocalState();
+            
             updateScoreboard();
             updateBases();
-            if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal);
+            renderRoster();
+            renderBattingOrder();
+            renderGameLog();
+            
+            if (gameState.userTeam) {
+                hideAllModals(); // Game is active
+            } else if (DOMElements.gameModeModal) {
+                showModal(DOMElements.gameModeModal);
+            }
+            
             initAuth();
             setupBaseActions();
             setupGameLogResize();
