@@ -457,8 +457,8 @@
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBN9HfXy4k2HIVGklUtk5fMA8yyX9RZH2g",
-            authDomain: "softball-scorecard.firebaseapp.com",
+            apiKey: "AIzaSyA2yR-Lx5bXUoWHaWUsFBijIuiqdAUZ3iw",
+            authDomain: "softballscorecard.com",
             projectId: "softball-scorecard",
             storageBucket: "softball-scorecard.firebasestorage.app",
             messagingSenderId: "749570093852",
@@ -579,7 +579,8 @@
             gameOverModal: document.getElementById('game-over-modal'),
             gameOverTitle: document.getElementById('game-over-title'),
             gameOverMessage: document.getElementById('game-over-message'),
-            gameOverCloseBtn: document.getElementById('game-over-close')
+            gameOverCloseBtn: document.getElementById('game-over-close'),
+            cancelHitButton: document.getElementById('cancel-hit')
         };
 
         // --- Game Log Functions ---
@@ -696,17 +697,17 @@
             }
         }
 
-        function handleInningToggle() {
-            if (gameState.isTransitioning) return;
-            advanceHalfInning();
-        }
-
         function triggerGameOver(title, message) {
             gameState.isTransitioning = true; // Lock UI interactions
             DOMElements.gameOverTitle.textContent = title;
             DOMElements.gameOverMessage.textContent = message;
             addLogEntry(`--- GAME OVER: ${title} ---`, 'inning');
             showModal(DOMElements.gameOverModal);
+        }
+
+        function handleInningToggle() {
+            if (gameState.isTransitioning) return;
+            advanceHalfInning();
         }
 
         function advanceHalfInning() {
@@ -811,7 +812,6 @@
                 updateScoreboard();
                 updateBases();
                 
-                // Prevent multiple transitions if buttons are spammed
                 if (!gameState.isTransitioning) {
                     gameState.isTransitioning = true;
                     setTimeout(() => {
@@ -888,7 +888,6 @@
             scored.forEach(n => addRuns(1, n, true));
             updateBases();
             
-            // Only advance the batter if the hit didn't end the inning via run limit
             if (!gameState.isTransitioning) {
                 handleNextBatter();
             }
@@ -1235,7 +1234,6 @@
             
             updateBases();
             
-            // Only advance the batter if the walk didn't end the inning via run limit
             if (!gameState.isTransitioning) {
                 handleNextBatter(); 
             }
@@ -1451,6 +1449,7 @@
 
         DOMElements.gameLogToggleBtn.onclick = handleGameLogToggle;
         DOMElements.editOrderBtn.onclick = handleEditOrderToggle;
+        DOMElements.cancelHitButton.onclick = hideAllModals;
 
         // --- End Game & Game Over Listeners ---
         const resetGame = () => {
