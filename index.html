@@ -32,12 +32,18 @@
         .baseball-diamond {
             width: 85%;
             margin: 0 auto;
-            aspect-ratio: 1 / 1;
+            height: 100%;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        
         .baseball-diamond svg {
             width: 100%;
             height: 100%;
+            max-height: 100%;
+            max-width: 100%;
         }
         .base {
             position: absolute;
@@ -74,9 +80,10 @@
             background-color: rgba(0, 0, 0, 0.6);
             border-radius: 4px;
             white-space: nowrap;
+            width: max-content;
+            max-width: 300%;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 120%;
             display: none;
             z-index: 10;
         }
@@ -84,7 +91,6 @@
             display: block;
         }
 
-        /* --- FINAL BASE POSITIONS --- */
         #home-plate { bottom: 5%; left: 42.5%; }
         #home-plate .base-label { bottom: -25px; }
         #first-base { bottom: 42.5%; right: 6.75%; }
@@ -104,22 +110,20 @@
             overflow: hidden;
         }
         
-        /* Batting Indicator Classes */
         .batting-current {
-            border-left: 4px solid #10b981; /* Green */
-            background-color: #f0fdf4; /* Light green */
+            border-left: 4px solid #10b981;
+            background-color: #f0fdf4;
         }
         .batting-on-deck {
-            border-left: 4px solid #f59e0b; /* Yellow */
-            background-color: #fffbeb; /* Light yellow */
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
         }
         .batting-in-hole {
-            border-left: 4px solid #fcd34d; /* Pale Yellow */
+            border-left: 4px solid #fcd34d;
         }
         
-        /* Drag Handle Style */
         .resize-handle {
-            touch-action: none; /* Prevents scrolling while dragging on mobile */
+            touch-action: none;
         }
     </style>
 </head>
@@ -252,6 +256,15 @@
             </div>
         </div>
 
+        <!-- "Game Over" Modal -->
+        <div id="game-over-modal" class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full hidden">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800" id="game-over-title">Game Over!</h2>
+            <p class="text-center text-xl text-gray-700 mb-6" id="game-over-message">Home Team Wins!</p>
+            <button id="game-over-close" class="w-full text-lg font-medium py-4 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Start New Game
+            </button>
+        </div>
+
     </div>
 
     <!-- Main Content -->
@@ -335,11 +348,10 @@
                     <button id="game-log-toggle-btn" class="px-3 py-1 text-lg font-bold bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">+</button>
                 </div>
                 <div id="game-log-toggle-content" style="max-height: 0px; opacity: 0;">
-                    <!-- Drag Handle (New) -->
+                    <!-- Drag Handle -->
                     <div id="game-log-resize-handle" class="resize-handle w-full h-4 bg-gray-200 cursor-row-resize flex justify-center items-center hover:bg-gray-300 mb-1 rounded-t-md">
                          <div class="w-8 h-1 bg-gray-400 rounded-full"></div>
                     </div>
-                    <!-- Fixed: Removed max-h-[200px] class, added style="height: 200px;" -->
                     <div id="game-log-list" class="bg-gray-100 p-3 rounded-lg shadow-inner space-y-2 overflow-y-auto text-sm" style="height: 200px;"></div>
                 </div>
             </div>
@@ -422,7 +434,7 @@
             </div>
             
             <div class="w-full md:h-2/3 flex-grow min-h-0 flex items-center justify-center bg-white rounded-lg shadow-xl p-4 overflow-hidden relative">
-                <div class="w-full aspect-square md:aspect-auto md:h-full relative">
+                <div class="w-full h-full relative">
                     <div class="baseball-diamond absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 50 10 L 90 50 L 50 90 L 10 50 Z" fill="#689f38" stroke="#a5d6a7" stroke-width="1"/>
@@ -440,9 +452,10 @@
     </div>
 
     <script type="module">
-        // --- Firebase Config ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyBN9HfXy4k2HIVGklUtk5fMA8yyX9RZH2g",
             authDomain: "softball-scorecard.firebaseapp.com",
@@ -452,48 +465,18 @@
             appId: "1:749570093852:web:d1f4ad5e1261637dfd40d9",
             measurementId: "G-27TEBB943P"
         };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         const appId = firebaseConfig.projectId;
+
+        let userId = null;
+        let rosterCollectionRef = null;
+        let unsubscribeRoster = () => {};
         
-        // --- Firebase Imports ---
-        import { 
-            getAuth, 
-            signInAnonymously, 
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc,
-            getDoc,
-            addDoc,
-            updateDoc,
-            deleteDoc, 
-            onSnapshot, 
-            collection, 
-            query,
-            setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-        // --- Helper Functions Moved to Top ---
-        function showModal(el) {
-            DOMElements.modalOverlay.classList.remove('hidden');
-            [...DOMElements.modalOverlay.children].forEach(c => c.classList.add('hidden'));
-            el.classList.remove('hidden');
-        }
-
-        function hideAllModals() {
-            DOMElements.modalOverlay.classList.add('hidden');
-        }
-
-        // --- Firebase Initialization ---
-        let app, db, auth, userId, rosterCollectionRef;
-        let unsubscribeRoster = () => {}; 
-        
-        // --- Drag & Drop Variables ---
         let draggedItem = null;
         let dragSourceListId = null;
 
-        // --- App State ---
         let gameState = {
             homeScore: 0,
             awayScore: 0,
@@ -515,15 +498,16 @@
             rosterMinimized: false,
             gameLogMinimized: true,
             gameLog: [],
-            gameLogHeight: 200, // Default height
-            isEditingOrder: false // New state for editing batting order
+            gameLogHeight: 200,
+            isTransitioning: false,
+            isEditingOrder: false
         };
+
         const RUN_LIMIT = 6;
         const RUN_LIMIT_INNING = 5;
         const STARTING_BALLS = 1;
         const STARTING_STRIKES = 1;
 
-        // --- DOM Elements ---
         const DOMElements = {
             homeScore: document.getElementById('home-score'),
             awayScore: document.getElementById('away-score'),
@@ -557,8 +541,6 @@
             playerNameInput: document.getElementById('player-name'),
             playerNumberInput: document.getElementById('player-number'),
             playerPositionInput: document.getElementById('player-position'),
-            genderMaleInput: document.getElementById('gender-male'),
-            genderFemaleInput: document.getElementById('gender-female'),
             battingOrderList: document.getElementById('batting-order-list'),
             battingOrderListMale: document.getElementById('batting-order-list-male'),
             battingOrderListFemale: document.getElementById('batting-order-list-female'),
@@ -592,12 +574,14 @@
             gameLogToggleContent: document.getElementById('game-log-toggle-content'),
             gameLogList: document.getElementById('game-log-list'),
             baseActionButtons: document.querySelectorAll('.base-action-btn'),
-            hitTypeButtons: document.querySelectorAll('.hit-type-btn'),
-            cancelHitButton: document.getElementById('cancel-hit'),
-            gameLogResizeHandle: document.getElementById('game-log-resize-handle'), // For Resize
-            editOrderBtn: document.getElementById('edit-order-btn') // New edit button
+            gameLogResizeHandle: document.getElementById('game-log-resize-handle'),
+            editOrderBtn: document.getElementById('edit-order-btn'),
+            gameOverModal: document.getElementById('game-over-modal'),
+            gameOverTitle: document.getElementById('game-over-title'),
+            gameOverMessage: document.getElementById('game-over-message'),
+            gameOverCloseBtn: document.getElementById('game-over-close')
         };
-        
+
         // --- Game Log Functions ---
         function addLogEntry(message, type = 'info') {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -611,22 +595,6 @@
             DOMElements.gameLogList.prepend(entry);
         }
 
-        function handleGameLogToggle() {
-            gameState.gameLogMinimized = !gameState.gameLogMinimized;
-            if (gameState.gameLogMinimized) {
-                DOMElements.gameLogToggleContent.style.maxHeight = '0px';
-                DOMElements.gameLogToggleContent.style.opacity = '0';
-                DOMElements.gameLogToggleContent.style.marginTop = '0';
-                DOMElements.gameLogToggleBtn.textContent = '+';
-            } else {
-                // Set max-height large enough to hold current log height + handle
-                DOMElements.gameLogToggleContent.style.maxHeight = (gameState.gameLogHeight + 50) + 'px'; 
-                DOMElements.gameLogToggleContent.style.opacity = '1';
-                DOMElements.gameLogToggleContent.style.marginTop = '';
-                DOMElements.gameLogToggleBtn.textContent = '-';
-            }
-        }
-        
         // --- Game Log Resize Logic ---
         function setupGameLogResize() {
             let startY, startHeight;
@@ -644,19 +612,17 @@
             };
 
             const onDragging = (e) => {
-                // Drag UP (negative delta) increases height
                 const delta = startY - e.clientY;
-                const newHeight = Math.max(100, Math.min(600, startHeight + delta)); // Min 100px, Max 600px
+                const newHeight = Math.max(100, Math.min(600, startHeight + delta));
                 gameState.gameLogHeight = newHeight;
                 list.style.height = newHeight + 'px';
-                // Update wrapper if open so it doesn't clip
                 if (!gameState.gameLogMinimized) {
                     DOMElements.gameLogToggleContent.style.maxHeight = (newHeight + 50) + 'px';
                 }
             };
             
             const onTouchDragging = (e) => {
-                e.preventDefault(); // Prevent scrolling
+                e.preventDefault(); 
                 const touch = e.touches[0];
                 const delta = startY - touch.clientY;
                 const newHeight = Math.max(100, Math.min(600, startHeight + delta));
@@ -675,19 +641,20 @@
                 document.body.style.cursor = '';
             };
 
-            handle.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                onDragStart(e.clientY);
-            });
-            handle.addEventListener('touchstart', (e) => {
-                // e.preventDefault(); // Don't prevent default on start, only move
-                onDragStart(e.touches[0].clientY);
-            });
+            handle.addEventListener('mousedown', (e) => { e.preventDefault(); onDragStart(e.clientY); });
+            handle.addEventListener('touchstart', (e) => { onDragStart(e.touches[0].clientY); });
         }
 
+        function isUserTeamAtBat() {
+            const isHomeBatting = !gameState.topOfInning;
+            const userIsHome = gameState.userTeam === 'home';
+            return isHomeBatting === userIsHome;
+        }
 
-        // --- UI Update Functions ---
-        
+        function getBatterName(p) {
+            return p ? p.name.split(' ')[0] : 'Batter';
+        }
+
         function updateScoreboard() {
             DOMElements.homeScore.textContent = gameState.homeScore;
             DOMElements.awayScore.textContent = gameState.awayScore;
@@ -696,26 +663,19 @@
             DOMElements.inningIndicator.innerHTML = gameState.topOfInning ? '&uarr;' : '&darr;';
             DOMElements.inningIndicator.className = `text-3xl font-bold ${gameState.topOfInning ? 'text-gray-700' : 'text-blue-700'}`;
             
-            // Highlight user's team label
             DOMElements.homeLabel.classList.toggle('ring-2', gameState.userTeam === 'home');
             DOMElements.homeLabel.classList.toggle('ring-yellow-400', gameState.userTeam === 'home');
             DOMElements.awayLabel.classList.toggle('ring-2', gameState.userTeam === 'away');
             DOMElements.awayLabel.classList.toggle('ring-yellow-400', gameState.userTeam === 'away');
-
-            // Set score colors based on user team
+            
             if (gameState.userTeam === 'home') {
                 DOMElements.homeScore.className = "text-4xl font-bold text-green-700";
                 DOMElements.awayScore.className = "text-4xl font-bold text-red-700";
             } else if (gameState.userTeam === 'away') {
                 DOMElements.homeScore.className = "text-4xl font-bold text-red-700";
                 DOMElements.awayScore.className = "text-4xl font-bold text-green-700";
-            } else {
-                // Default if not selected yet (though logic suggests it's selected early)
-                DOMElements.homeScore.className = "text-4xl font-bold text-blue-700"; // or whatever default
-                DOMElements.awayScore.className = "text-4xl font-bold text-gray-700";
             }
-
-
+            
             updateCounter(DOMElements.balls, gameState.balls, 'bg-yellow-400');
             updateCounter(DOMElements.strikes, gameState.strikes, 'bg-red-500');
             updateCounter(DOMElements.outs, gameState.outs, 'bg-red-500');
@@ -731,828 +691,210 @@
         function updateBases() {
             for (let i = 1; i <= 3; i++) {
                 const runner = gameState.bases[i];
-                // --- DYNAMIC NUMBERING: Calculate runner label relative to runs scored ---
-                let runnersAhead = 0;
-                for (let b = i + 1; b <= 3; b++) {
-                     if (gameState.bases[b]) runnersAhead++;
-                }
-                
-                const dynamicNumber = gameState.runsThisInning + 1 + runnersAhead;
-                
                 DOMElements.bases[i].classList.toggle('active', !!runner);
-                // Use calculated dynamicNumber instead of stored displayOrder
-                DOMElements.baseRunners[i].textContent = runner ? `${dynamicNumber} - ${runner.name}` : '';
+                DOMElements.baseRunners[i].textContent = runner ? `${runner.displayOrder} - ${runner.name}` : '';
             }
         }
-        
-        function getAllRunners() {
-            const runners = [];
-            if (gameState.bases[1]) runners.push(gameState.bases[1]);
-            if (gameState.bases[2]) runners.push(gameState.bases[2]);
-            if (gameState.bases[3]) runners.push(gameState.bases[3]);
-            return runners;
+
+        function handleInningToggle() {
+            if (gameState.isTransitioning) return;
+            advanceHalfInning();
         }
 
-        function clearBases() {
+        function triggerGameOver(title, message) {
+            gameState.isTransitioning = true; // Lock UI interactions
+            DOMElements.gameOverTitle.textContent = title;
+            DOMElements.gameOverMessage.textContent = message;
+            addLogEntry(`--- GAME OVER: ${title} ---`, 'inning');
+            showModal(DOMElements.gameOverModal);
+        }
+
+        function advanceHalfInning() {
+            handleNextBatter(true);
+            gameState.outs = 0;
+            gameState.runsThisInning = 0;
+            gameState.runnerInningCounter = 0;
+            gameState.runsThisPlay = 0;
+            gameState.topOfInning = !gameState.topOfInning;
+            if (gameState.topOfInning) gameState.inning++;
             gameState.bases = { 1: null, 2: null, 3: null };
+            gameState.balls = STARTING_BALLS;
+            gameState.strikes = STARTING_STRIKES;
+            
+            gameState.isTransitioning = false; 
+            
+            updateScoreboard();
+            updateBases();
+            renderBattingOrder();
+
+            // End game check: Going into bottom of 7th, home team leading
+            if (gameState.inning >= 7 && !gameState.topOfInning && gameState.homeScore > gameState.awayScore) {
+                triggerGameOver('Home Team Wins!', `Home leads ${gameState.homeScore}-${gameState.awayScore} going into the bottom of the ${gameState.inning}th.`);
+                return;
+            }
+
+            // End game check: End of 7th (or later) and not tied
+            if (gameState.inning > 7 && gameState.topOfInning && gameState.homeScore !== gameState.awayScore) {
+                const winner = gameState.homeScore > gameState.awayScore ? 'Home' : 'Away';
+                triggerGameOver(`${winner} Team Wins!`, `Final Score: Home ${gameState.homeScore} - Away ${gameState.awayScore}`);
+                return;
+            }
+
+            addLogEntry(`Start ${gameState.topOfInning ? 'Top' : 'Bottom'} of Inning ${gameState.inning}.`, 'inning');
+        }
+
+        function addOut(logMsg = 'Out.') {
+            if (gameState.isTransitioning) return true; 
+
+            if (gameState.outs < 2) {
+                gameState.outs++;
+                addLogEntry(logMsg, 'out');
+                updateScoreboard();
+                return false;
+            } else {
+                gameState.outs = 3; 
+                gameState.isTransitioning = true; 
+                addLogEntry(logMsg, 'out');
+                updateScoreboard();
+
+                setTimeout(() => {
+                    if (gameState.runsThisPlay > 0) {
+                        showModal(DOMElements.forceOutModal);
+                    } else {
+                        advanceHalfInning();
+                    }
+                }, 1000); 
+                
+                return true;
+            }
+        }
+
+        function renumberRunnersOnBase(outOrder) {
+            gameState.runnerInningCounter--;
+            for (let i = 1; i <= 3; i++) {
+                if (gameState.bases[i] && gameState.bases[i].displayOrder > outOrder) {
+                    gameState.bases[i].displayOrder--;
+                }
+            }
             updateBases();
         }
 
-        function resetCounts() {
-            gameState.balls = STARTING_BALLS;
-            gameState.strikes = STARTING_STRIKES;
-            // The runsThisPlay is intentionally NOT reset here, only in advanceHalfInning
-            updateScoreboard();
-        }
-        
-        // --- NEW Force Out Logic ---
-        function handleForceOut(wasForceOut) {
-            hideAllModals();
-            if (wasForceOut) {
-                // Negate the runs scored *this play*
-                const runsToNegate = gameState.runsThisPlay;
-                if (runsToNegate > 0) {
-                    addLogEntry(`Runs negated due to force out (-${runsToNegate} run${runsToNegate > 1 ? 's' : ''}).`, 'out');
-                    gameState.runsThisInning -= runsToNegate;
-                    if (gameState.topOfInning) {
-                        gameState.awayScore -= runsToNegate;
-                    } else {
-                        gameState.homeScore -= runsToNegate;
-                    }
-                }
-            }
-            // Whether it was a force out or not, the inning is now over.
-            advanceHalfInning();
-        }
-        // --- End Force Out Logic ---
-
-
-        function advanceHalfInning() {
-            const currentTeam = gameState.topOfInning ? 'Away' : 'Home';
-            addLogEntry(`--- ${currentTeam} team 3 outs. ---`, 'inning');
+        function addRuns(count, runnerName = 'Runner', isManual = false) {
+            if (count <= 0) return;
+            if (isManual) addLogEntry(`${runnerName} scores! (+${count})`, 'run');
             
-            // --- CRITICAL FIX 1: Advance batter index for the next half-inning ---
-            handleNextBatter(true); // Advance batter index only, skip count reset
-            
-            gameState.outs = 0;
-            gameState.runsThisInning = 0;
-            gameState.runnerInningCounter = 0; // Reset for new half-inning
-            gameState.runsThisPlay = 0; // --- RESET runsThisPlay HERE ONLY ---
+            gameState.runsThisPlay += count;
+            gameState.runsThisInning += count;
             
             if (gameState.topOfInning) {
-                // Top of inning ends, switch to bottom
-                gameState.topOfInning = false;
-                addLogEntry(`Start Bottom of Inning ${gameState.inning}.`, 'inning');
+                gameState.awayScore += count;
             } else {
-                // Bottom of inning ends, switch to next inning
-                gameState.topOfInning = true;
-                gameState.inning++;
-                addLogEntry(`Start Top of Inning ${gameState.inning}.`, 'inning');
+                gameState.homeScore += count;
             }
-            clearBases();
-            resetCounts(); // Resets to 1-1
-            updateScoreboard();
-            highlightCurrentBatter(); // Highlight batter for the new half-inning
-        }
 
-        /**
-         * Adds an out to the game state.
-         * @returns {boolean} Returns true if this was the 3rd out, false otherwise.
-         */
-        function addOut(logMessage = 'Out recorded.') {
-            let isThirdOut = false; // Flag
-            if (gameState.outs < 2) {
-                gameState.outs++;
-                addLogEntry(logMessage, 'out');
+            // Walk-off check (bottom of 7th or later, home team takes the lead)
+            if (gameState.inning >= 7 && !gameState.topOfInning && gameState.homeScore > gameState.awayScore) {
                 updateScoreboard();
-            } else {
-                // 3rd out
-                addLogEntry(logMessage, 'out');
-                isThirdOut = true; // Set flag
-                updateScoreboard(); // Show 3 outs briefly
-                
-                // --- NEW Force Out Check ---
-                if (gameState.runsThisPlay > 0) {
-                    // A run scored on the 3rd out play, ask if it was a force out
-                    setTimeout(() => { // Delay to let user see the 3rd out
-                        showModal(DOMElements.forceOutModal);
-                    }, 500);
-                } else {
-                    // No runs on the play, just advance the inning
-                    setTimeout(() => {
-                        advanceHalfInning();
-                    }, 500);
-                }
-            }
-            return isThirdOut; // Return if it was the 3rd out
-        }
-
-        function addRuns(numRuns, batterName = 'Runner', isManual = false) {
-            if (numRuns <= 0) return;
-            
-            // Only log if it's a manual score or a forced-in run
-            if(isManual) {
-                addLogEntry(`${batterName} scores! (+${numRuns} run${numRuns > 1 ? 's' : ''})`, 'run');
+                updateBases();
+                triggerGameOver('Home Team Wins!', `Walk-off victory! Home wins ${gameState.homeScore}-${gameState.awayScore}.`);
+                return;
             }
 
-            gameState.runsThisPlay += numRuns; // Track for force out
-            gameState.runsThisInning += numRuns;
-            if (gameState.topOfInning) {
-                gameState.awayScore += numRuns;
-            } else {
-                gameState.homeScore += numRuns;
-            }
-
-            // Check for run limit
             if (gameState.inning <= RUN_LIMIT_INNING && gameState.runsThisInning >= RUN_LIMIT) {
-                // Reached run limit, advance inning
                 const overage = gameState.runsThisInning - RUN_LIMIT;
                 if (overage > 0) {
-                    if (gameState.topOfInning) {
-                        gameState.awayScore -= overage;
-                    } else {
-                        gameState.homeScore -= overage;
-                    }
+                    if (gameState.topOfInning) gameState.awayScore -= overage;
+                    else gameState.homeScore -= overage;
                     addLogEntry(`Run limit of ${RUN_LIMIT} reached. (-${overage} run${overage > 1 ? 's' : ''})`, 'info');
                 }
                 gameState.runsThisInning = RUN_LIMIT;
-                
                 updateScoreboard();
-                updateBases(); // Show final base state
+                updateBases();
                 
-                // Use a short delay so user can see the final play
-                setTimeout(() => {
-                    advanceHalfInning();
-                }, 1500);
+                // Prevent multiple transitions if buttons are spammed
+                if (!gameState.isTransitioning) {
+                    gameState.isTransitioning = true;
+                    setTimeout(() => {
+                        advanceHalfInning();
+                    }, 1500);
+                }
             } else {
                 updateScoreboard();
             }
         }
 
         function getCurrentBatter() {
-            let batter = null;
-            if (gameState.gameMode === 'traditional') {
+            const mode = gameState.gameMode;
+            if (mode === 'traditional') {
                 const list = gameState.battingOrder.traditional;
-                const index = gameState.currentBatterIndex.traditional;
-                if (list.length > 0) {
-                    batter = list[index % list.length];
-                }
-            } else if (gameState.gameMode === 'wheel') {
-                if (gameState.nextToBat === 'male') {
-                    const list = gameState.battingOrder.male;
-                    const index = gameState.currentBatterIndex.male;
-                    if (list.length > 0) {
-                        batter = list[index % list.length];
-                    }
-                } else {
-                    const list = gameState.battingOrder.female;
-                    const index = gameState.currentBatterIndex.female;
-                    if (list.length > 0) {
-                        batter = list[index % list.length];
-                    }
-                }
+                if (!list.length) return null;
+                return list[gameState.currentBatterIndex.traditional % list.length];
+            } else {
+                const currentGender = gameState.nextToBat || 'male';
+                const list = (currentGender === 'male') ? gameState.battingOrder.male : gameState.battingOrder.female;
+                if (!list.length) return null;
+                return list[gameState.currentBatterIndex[currentGender] % list.length];
             }
-            return batter;
         }
 
-        // --- Helper to check if it's the user's team at bat ---
-        function isUserTeamAtBat() {
-            const isHomeBatting = !gameState.topOfInning;
-            const userIsHome = gameState.userTeam === 'home';
-            return isHomeBatting === userIsHome;
-        }
-
-        function getBatterName(batter) {
-            // If it's not the user's team at bat, return "Away".
-            if (!isUserTeamAtBat()) return "Away";
-            // Otherwise, use the batter's name
-            return batter ? batter.name.split(' ')[0] : "Batter";
-        }
-
-        // --- RUNNER NUMBERING FIX ---
-        function getNextRunnerDisplayOrder() {
-            // This is the number of batters who have COME to the plate this inning
-            return gameState.runnerInningCounter + 1;
-        }
-        
-        function createNewRunner(batter) {
-            gameState.runnerInningCounter++; // This is the *original* number
-            const batterName = getBatterName(batter);
-            // Display order IS the inning counter
-            const displayOrder = gameState.runnerInningCounter; 
-
-            return {
-                name: batterName,
-                originalNumber: gameState.runnerInningCounter,
-                displayOrder: displayOrder
-            };
-        }
-        // --- END RUNNER NUMBERING FIX ---
-        
-        function advanceRunnersOnWalk(batter) {
-            const batterName = getBatterName(batter);
-            addLogEntry(`${batterName} walks.`, 'info');
-            
-            const newRunner = createNewRunner(batter);
-            let runsScored = 0;
-            let scoredRunnerName = 'Runner';
-            
-            // Check gender *only* if it's the user's team
-            const isMale = isUserTeamAtBat() && batter && batter.gender === 'male';
-
-            // --- Standard Walk Logic (Force runners) ---
-            if (gameState.bases[1] && gameState.bases[2] && gameState.bases[3]) { // Bases loaded
-                runsScored++; // Runner from 3rd scores
-                scoredRunnerName = gameState.bases[3].name;
-                gameState.bases[3] = gameState.bases[2];
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else if (gameState.bases[1] && gameState.bases[2]) { // Runners on 1st and 2nd
-                gameState.bases[3] = gameState.bases[2];
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else if (gameState.bases[1]) { // Runner on 1st only
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else { // No force
-                gameState.bases[1] = newRunner;
-            }
-            
-            // --- Co-Ed Male Walk Rule: Advance to 2nd (if they are on 1st) ---
-            if (isMale && gameState.bases[1] === newRunner) {
-                addLogEntry(`Male walk rule: ${batterName} advances to 2nd.`, 'info');
-                // Batter is on 1st, advance them to 2nd (no force)
-                if (gameState.bases[2]) {
-                    // 2nd is occupied, advance 2nd to 3rd (no force)
-                    if (gameState.bases[3]) {
-                        // 3rd is occupied, advance 3rd home (no force)
-                        runsScored++;
-                        scoredRunnerName = gameState.bases[3].name;
-                    }
-                    gameState.bases[3] = gameState.bases[2];
-                }
-                gameState.bases[2] = gameState.bases[1]; // Move batter to 2nd
-                gameState.bases[1] = null; // Vacate 1st
-            }
-
-            if (runsScored > 0) {
-                addRuns(runsScored, scoredRunnerName, true); // This is a forced-in run, log it
-            }
-            updateBases();
-        }
-        
-        // --- NEW HIT "PUSH" LOGIC ---
-        function advanceRunnersOnHit(batter, hitType) {
+        function advanceRunnersOnHit(hitType) {
+            const batter = getCurrentBatter();
             const batterName = getBatterName(batter);
             const hitNames = ['Single', 'Double', 'Triple', 'Home Run'];
-            addLogEntry(`${batterName} hits a ${hitNames[hitType - 1]}!`, 'info');
-
-            hideAllModals();
+            addLogEntry(`${batterName} hits for ${hitNames[hitType - 1]}.`, 'info');
             
-            const newRunner = createNewRunner(batter);
-            const scoredRunners = [];
+            const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
+            const scored = [];
+            
+            const r1 = gameState.bases[1];
+            const r2 = gameState.bases[2];
+            const r3 = gameState.bases[3];
+            
+            gameState.bases = { 1: null, 2: null, 3: null }; 
 
-            // --- RE-FIXED PUSH LOGIC ---
-            let runsFromPush = 0;
-            const scoredFromPush = [];
-            const finalBases = { 1: null, 2: null, 3: null };
-
-            // 1. Handle Home Run: Clear all bases and score everyone
-            if (hitType === 4) {
-                for (let baseNum = 3; baseNum >= 1; baseNum--) {
-                    if (gameState.bases[baseNum]) {
-                        runsFromPush++;
-                        scoredFromPush.push(gameState.bases[baseNum].name);
-                    }
-                    gameState.bases[baseNum] = null; // Clear base
+            if (hitType === 4) { 
+                if (r3) scored.push(r3.name);
+                if (r2) scored.push(r2.name);
+                if (r1) scored.push(r1.name);
+                scored.push(newRunner.name);
+            } 
+            else if (hitType === 3) { 
+                if (r3) scored.push(r3.name);
+                if (r2) scored.push(r2.name);
+                if (r1) scored.push(r1.name);
+                gameState.bases[3] = newRunner;
+            } 
+            else if (hitType === 2) { 
+                if (r3) scored.push(r3.name);
+                if (r2) scored.push(r2.name);
+                if (r1) gameState.bases[3] = r1;
+                gameState.bases[2] = newRunner;
+            } 
+            else if (hitType === 1) { 
+                if (r3) {
+                    if (r2 && r1) scored.push(r3.name); 
+                    else gameState.bases[3] = r3; 
                 }
-                runsFromPush++;
-                scoredFromPush.push(newRunner.name); // Batter scores
-                gameState.bases = { 1: null, 2: null, 3: null }; // Ensure clear state
-                
-            } else {
-                 // Place batter first on their hit base
-                finalBases[hitType] = newRunner;
-
-                // Process existing runners from 3rd down to 1st
-                // Only advance a runner if their base or the one they are forced to is taken by the "push" coming from behind
-                
-                // Let's model this as a chain reaction from the batter.
-                // Batter lands on [hitType].
-                // IF [hitType] was occupied, THAT runner is pushed to [hitType + 1].
-                // IF [hitType + 1] was occupied, THAT runner is pushed to [hitType + 2].
-                // ...and so on.
-
-                let currentPusher = newRunner;
-                let currentPusherBase = hitType;
-
-                // We need to know who was where originally
-                const originalRunners = { ...gameState.bases };
-
-                // Recursive push function
-                function pushRunner(baseToOccupy, pushingRunner) {
-                     // Check if someone is currently at baseToOccupy
-                     const occupant = originalRunners[baseToOccupy];
-                     
-                     // Place the pusher
-                     finalBases[baseToOccupy] = pushingRunner;
-                     
-                     // If there was an occupant, they are forced to next base
-                     if (occupant) {
-                         const nextBase = baseToOccupy + 1;
-                         if (nextBase > 3) {
-                             runsFromPush++;
-                             scoredFromPush.push(occupant.name);
-                         } else {
-                             pushRunner(nextBase, occupant);
-                         }
-                     }
+                if (r2) {
+                    if (r1) gameState.bases[3] = r2; 
+                    else gameState.bases[2] = r2; 
                 }
-                
-                // BUT wait, that logic is for a Walk (force).
-                // On a HIT, the rule is:
-                // 1. Batter is placed at [hitType].
-                // 2. IF a runner was at [hitType] OR was pushed into it, they move forward.
-                // 3. Runners AHEAD of the push who are NOT forced stay put (unless you manually move them).
-                
-                // Example: Runner on 2nd. Batter hits Single (to 1st).
-                // Batter -> 1st.
-                // Runner at 2nd is NOT forced by 1st. Stays at 2nd.
-                // Correct.
-                
-                // Example: Runner on 1st. Batter hits Single (to 1st).
-                // Batter -> 1st.
-                // Runner at 1st is forced to 2nd.
-                // Runner at 2nd (if any) is forced to 3rd.
-                
-                // Let's implement this logic:
-                // We start with the batter at `hitType`.
-                // We check `originalRunners[hitType]`. If exists, they must move to `hitType+1`.
-                // We check `originalRunners[hitType+1]`. If exists AND we are pushing into it, they move to `hitType+2`.
-                
-                // Copy non-forced runners to finalBases first
-                for(let b=1; b<=3; b++) {
-                    if (originalRunners[b] && b > hitType) {
-                         // Runners ahead of the hit who are not immediately displaced *might* stay put.
-                         // We will overwrite them if a push comes through.
-                         finalBases[b] = originalRunners[b];
-                    }
+                if (r1) {
+                    gameState.bases[2] = r1; 
                 }
-                
-                // Start the push chain
-                let runnerBeingPushed = null;
-                let baseToPushTo = null;
-                
-                // 1. Batter takes base
-                // Check who is displaced
-                if (originalRunners[hitType]) {
-                    runnerBeingPushed = originalRunners[hitType];
-                    baseToPushTo = hitType + 1;
-                }
-                finalBases[hitType] = newRunner;
-                
-                // 2. Resolve push chain
-                while (runnerBeingPushed) {
-                    if (baseToPushTo > 3) {
-                        runsFromPush++;
-                        scoredFromPush.push(runnerBeingPushed.name);
-                        runnerBeingPushed = null; // Scored
-                    } else {
-                        // Check if someone is at the next base
-                        const nextOccupant = originalRunners[baseToPushTo];
-                        
-                        // Place pushed runner
-                        finalBases[baseToPushTo] = runnerBeingPushed;
-                        
-                        if (nextOccupant) {
-                            // Continue chain
-                            runnerBeingPushed = nextOccupant;
-                            baseToPushTo++;
-                        } else {
-                            // Chain ends
-                            runnerBeingPushed = null;
-                        }
-                    }
-                }
+                gameState.bases[1] = newRunner;
             }
-            // --- END RE-FIXED PUSH LOGIC ---
 
-            gameState.bases = finalBases;
-
-            if (runsFromPush > 0) {
-                // Log runs one by one
-                scoredFromPush.forEach(name => addRuns(1, name, true));
-            }
+            scored.forEach(n => addRuns(1, n, true));
             updateBases();
-            handleNextBatter();
-        }
-        // --- END NEW HIT LOGIC ---
-
-
-        // --- Roster & Batting Order UI ---
-
-        function createPlayerCard(player) {
-            const card = document.createElement('div');
-            card.className = 'roster-card bg-white p-2 rounded-md shadow-sm flex justify-between items-center';
-            card.dataset.id = player.id;
-            card.dataset.gender = player.gender;
-            card.dataset.playerData = JSON.stringify(player);
-            card.draggable = true;
-
-            const genderIcon = player.gender === 'male' 
-                ? `<span class="font-bold text-blue-600">(M)</span>` 
-                : `<span class="font-bold text-pink-600">(F)</span>`;
             
-            // Format: (15)
-            const num = player.number ? `(${player.number})` : '';
-            // Format: LC - 
-            const pos = player.position ? `${player.position} - ` : '';
-            
-            // Layout: (M) LC - Jarred (15)
-            card.innerHTML = `
-                <span class="font-medium text-sm text-gray-800">${genderIcon} ${pos}${player.name} ${num}</span>
-                <div class="flex space-x-1">
-                    <button data-id="${player.id}" class="add-player-to-order text-green-600 hover:text-green-800 font-bold text-lg px-2 rounded-md hover:bg-green-100" title="Add to batting order">+</button>
-                    <button data-id="${player.id}" class="remove-player text-red-500 hover:text-red-700 font-bold text-lg px-2 rounded-md hover:bg-red-100" title="Remove from roster">&times;</button>
-                </div>
-            `;
-            return card;
-        }
-
-        function renderRoster() {
-            DOMElements.rosterList.innerHTML = '';
-            gameState.roster.forEach(player => {
-                const card = createPlayerCard(player);
-                // Only roster list cards should have remove/add buttons
-                card.querySelector('.remove-player').addEventListener('click', handleRemovePlayer);
-                card.querySelector('.add-player-to-order').addEventListener('click', handleAddPlayerToOrder);
-                
-                // --- NEW LOGIC: Hide + if in lineup ---
-                const inTraditional = gameState.battingOrder.traditional.find(p => p.id === player.id);
-                const inMale = gameState.battingOrder.male.find(p => p.id === player.id);
-                const inFemale = gameState.battingOrder.female.find(p => p.id === player.id);
-                const addButton = card.querySelector('.add-player-to-order');
-                
-                if (inTraditional || inMale || inFemale) {
-                    addButton.style.display = 'none'; // Hide the + button
-                } else {
-                    addButton.style.display = 'inline-block'; // Show
-                }
-                // --- END NEW LOGIC ---
-                
-                DOMElements.rosterList.appendChild(card);
-            });
-        }
-
-        function createBattingOrderCard(player) {
-            const card = document.createElement('div');
-            // Use the same class structure as roster card for consistency
-            card.className = 'roster-card bg-white p-2 rounded-md shadow-sm flex justify-between items-center'; 
-            card.dataset.id = player.id;
-            card.dataset.gender = player.gender;
-            card.dataset.playerData = JSON.stringify(player);
-            card.draggable = true;
-
-            const genderIcon = player.gender === 'male' 
-                ? `<span class="font-bold text-blue-600">(M)</span>` 
-                : `<span class="font-bold text-pink-600">(F)</span>`;
-            
-            const num = player.number ? `(${player.number})` : '';
-            const pos = player.position ? `${player.position} - ` : '';
-            
-            // Layout: LC - Jarred (15) - Gender removed
-            card.innerHTML = `
-                <span class="font-medium text-sm text-gray-800">${pos}${player.name} ${num}</span>
-            `;
-            return card;
-        }
-
-        function renderBattingOrder() {
-            DOMElements.battingOrderList.innerHTML = '';
-            DOMElements.battingOrderListMale.innerHTML = '';
-            DOMElements.battingOrderListFemale.innerHTML = '';
-
-            const shouldHighlight = isUserTeamAtBat();
-            
-            // Helper to create indicators
-            const createDot = (type) => {
-                const dot = document.createElement('span');
-                dot.className = "w-3 h-3 rounded-full ml-3 flex-shrink-0"; // Changed margin to ml-3 for right side
-                if (type === 'current') dot.classList.add('bg-green-500');
-                else if (type === 'next-opposite') dot.classList.add('bg-orange-500');
-                else if (type === 'next-same') dot.classList.add('border-2', 'border-orange-500');
-                return dot;
-            };
-
-            // Traditional List Logic
-            let traditionalLength = gameState.battingOrder.traditional.length;
-            gameState.battingOrder.traditional.forEach((player, index) => {
-                const card = createBattingOrderCard(player);
-                if (shouldHighlight && traditionalLength > 0) {
-                    const rel = (index - (gameState.currentBatterIndex.traditional % traditionalLength) + traditionalLength) % traditionalLength;
-                    if (rel === 0) card.appendChild(createDot('current'));
-                    else if (rel === 1) card.appendChild(createDot('next-opposite'));
-                    else if (rel === 2) card.appendChild(createDot('next-same'));
-                }
-                
-                // Add Delete Button if editing
-                if (gameState.isEditingOrder) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerHTML = '&minus;'; // Minus symbol
-                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
-                    deleteBtn.addEventListener('click', (e) => handleRemoveFromOrder(e, index, 'traditional'));
-                    card.appendChild(deleteBtn);
-                }
-
-                DOMElements.battingOrderList.appendChild(card);
-            });
-
-            // Wheel Lists Logic
-            const nextBat = gameState.nextToBat; // 'male' or 'female'
-            const mList = gameState.battingOrder.male;
-            const mLen = mList.length;
-            const mIdx = gameState.currentBatterIndex.male;
-
-            const fList = gameState.battingOrder.female;
-            const fLen = fList.length;
-            const fIdx = gameState.currentBatterIndex.female;
-
-            // Render Male List
-            mList.forEach((player, index) => {
-                const card = createBattingOrderCard(player);
-                if (shouldHighlight && gameState.gameMode === 'wheel') {
-                    if (nextBat === 'male') {
-                        // Male is batting now (Green)
-                        if (index === mIdx % (mLen || 1)) card.appendChild(createDot('current'));
-                        // Next male is "In Hole" (Orange Ring)
-                        else if (index === (mIdx + 1) % (mLen || 1)) card.appendChild(createDot('next-same'));
-                    } else {
-                        // Female is batting, Male is On Deck (Orange Dot)
-                        if (index === mIdx % (mLen || 1)) card.appendChild(createDot('next-opposite'));
-                    }
-                }
-                
-                if (gameState.isEditingOrder) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerHTML = '&minus;'; 
-                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
-                    deleteBtn.addEventListener('click', (e) => handleRemoveFromOrder(e, index, 'male'));
-                    card.appendChild(deleteBtn);
-                }
-                
-                DOMElements.battingOrderListMale.appendChild(card);
-            });
-
-            // Render Female List
-            fList.forEach((player, index) => {
-                const card = createBattingOrderCard(player);
-                if (shouldHighlight && gameState.gameMode === 'wheel') {
-                    if (nextBat === 'female') {
-                        // Female is batting now (Green)
-                        if (index === fIdx % (fLen || 1)) card.appendChild(createDot('current'));
-                        // Next female is "In Hole" (Orange Ring)
-                        else if (index === (fIdx + 1) % (fLen || 1)) card.appendChild(createDot('next-same'));
-                    } else {
-                        // Male is batting, Female is On Deck (Orange Dot)
-                        if (index === fIdx % (fLen || 1)) card.appendChild(createDot('next-opposite'));
-                    }
-                }
-                
-                if (gameState.isEditingOrder) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerHTML = '&minus;'; 
-                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
-                    deleteBtn.addEventListener('click', (e) => handleRemoveFromOrder(e, index, 'female'));
-                    card.appendChild(deleteBtn);
-                }
-
-                DOMElements.battingOrderListFemale.appendChild(card);
-            });
-
-            validateBattingOrder();
-        }
-
-        function validateBattingOrder() {
-            // No need to disable button, just show warning
-            if (gameState.gameMode !== 'traditional' || gameState.battingOrder.traditional.length < 2) {
-                DOMElements.battingOrderList.classList.remove('invalid-order');
-                DOMElements.orderWarning.classList.add('hidden');
-                return true;
-            }
-
-            let isValid = true;
-            for (let i = 1; i < gameState.battingOrder.traditional.length; i++) {
-                if (gameState.battingOrder.traditional[i].gender === gameState.battingOrder.traditional[i-1].gender) {
-                    isValid = false;
-                    break;
-                }
-            }
-
-            DOMElements.battingOrderList.classList.toggle('invalid-order', !isValid);
-            DOMElements.orderWarning.classList.toggle('hidden', isValid);
-            
-            return isValid;
-        }
-
-        function highlightCurrentBatter() {
-            // Re-render batting order to update highlights
-            renderBattingOrder();
-        }
-        
-        function handleEditOrderToggle() {
-            gameState.isEditingOrder = !gameState.isEditingOrder;
-            DOMElements.editOrderBtn.textContent = gameState.isEditingOrder ? 'Done' : 'Edit';
-            renderBattingOrder();
-        }
-        
-        function handleRemoveFromOrder(e, index, listType) {
-            e.stopPropagation(); // Prevent drag/click logic
-            
-            if (listType === 'traditional') {
-                gameState.battingOrder.traditional.splice(index, 1);
-            } else if (listType === 'male') {
-                gameState.battingOrder.male.splice(index, 1);
-            } else if (listType === 'female') {
-                gameState.battingOrder.female.splice(index, 1);
-            }
-            
-            renderBattingOrder();
-            renderRoster(); // Update roster + buttons
-        }
-
-
-        // --- Event Handlers ---
-        function handleInningToggle() {
-            // This is now the main way to switch teams
-            gameState.topOfInning = !gameState.topOfInning;
-            // Clear everything for the new team
-            gameState.outs = 0;
-            gameState.runsThisInning = 0;
-            gameState.runnerInningCounter = 0;
-            clearBases();
-            resetCounts(); // Resets to 1-1 count
-            updateScoreboard();
-            highlightCurrentBatter(); // Update highlight for new team
-
-            const teamName = gameState.topOfInning ? 'Away' : 'Home';
-            addLogEntry(`Manual override: Switched to ${teamName} team.`, 'info');
-        }
-
-        function handleGameModeSelect(e) {
-            const mode = e.currentTarget.id === 'mode-traditional' ? 'traditional' : 'wheel';
-            gameState.gameMode = mode;
-            addLogEntry(`Game mode set to: ${mode}.`);
-            
-            DOMElements.gameModeModal.classList.add('hidden');
-            
-            if (mode === 'traditional') {
-                DOMElements.traditionalContainer.classList.remove('hidden');
-                DOMElements.traditionalContainer.classList.add('flex');
-                DOMElements.wheelOrderContainer.classList.add('hidden'); // Corrected variable name
-                DOMElements.wheelOrderContainer.classList.remove('md:grid'); // Corrected variable name
-                // Next, ask for user's team
-                DOMElements.userTeamModal.classList.remove('hidden');
-            } else {
-                DOMElements.traditionalContainer.classList.add('hidden');
-                DOMElements.traditionalContainer.classList.remove('flex');
-                DOMElements.wheelOrderContainer.classList.remove('hidden'); // Corrected variable name
-                DOMElements.wheelOrderContainer.classList.add('md:grid'); // Corrected variable name
-                
-                // Show "Who Bats First?" modal
-                DOMElements.whoBatsFirstModal.classList.remove('hidden');
-            }
-            renderBattingOrder();
-        }
-
-        function handleWhoBatsFirst(e) {
-            // --- BUG FIX: Corrected assignment logic ---
-            gameState.nextToBat = (e.currentTarget.id === 'start-male') ? 'male' : 'female';
-            addLogEntry(`"Bat the Wheel" mode: ${gameState.nextToBat}s batting first.`);
-            
-            DOMElements.whoBatsFirstModal.classList.add('hidden');
-            
-            // Next, ask for user's team
-            DOMElements.userTeamModal.classList.remove('hidden');
-        }
-
-        function handleUserTeamSelect(e) {
-            gameState.userTeam = e.currentTarget.id === 'team-home' ? 'home' : 'away';
-            addLogEntry(`User team set to: ${gameState.userTeam}.`);
-            
-            DOMElements.userTeamModal.classList.add('hidden');
-            DOMElements.modalOverlay.classList.add('hidden'); // Close modal
-            
-            updateScoreboard(); // Show team highlight
-            highlightCurrentBatter(); // Show initial highlight
-            addLogEntry(`--- Game Start! Top of Inning 1. ---`, 'inning');
-        }
-
-        async function handleRosterSubmit(e) {
-            e.preventDefault();
-            const name = DOMElements.playerNameInput.value.trim();
-            const number = DOMElements.playerNumberInput.value.trim();
-            const position = DOMElements.playerPositionInput.value.trim();
-            const gender = DOMElements.genderMaleInput.checked ? 'male' : 'female';
-            
-            if (!name || !userId) return;
-
-            const newPlayer = { name, number, position, gender };
-
-            try {
-                // Roster is now stored at: artifacts/{appId}/users/{userId}/roster
-                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/roster`), newPlayer);
-                addLogEntry(`Player added to roster: ${name}.`);
-                // Clear inputs *except* gender
-                DOMElements.playerNameInput.value = '';
-                DOMElements.playerNumberInput.value = '';
-                DOMElements.playerPositionInput.value = '';
-                // The listener will auto-update the UI
-            } catch (error) {
-                console.error("Error adding player to Firestore: ", error);
+            // Only advance the batter if the hit didn't end the inning via run limit
+            if (!gameState.isTransitioning) {
+                handleNextBatter();
             }
         }
 
-        function handleAddPlayerToOrder(e) {
-            e.stopPropagation(); // Prevent drag from starting
-            const id = e.currentTarget.dataset.id;
-            const player = gameState.roster.find(p => p.id === id);
-            if (!player) return;
-
-            let targetList;
-            if (gameState.gameMode === 'traditional') {
-                targetList = gameState.battingOrder.traditional;
-            } else {
-                targetList = (player.gender === 'male') ? gameState.battingOrder.male : gameState.battingOrder.female;
-            }
-
-            // Add player only if they are not already in the target list
-            const exists = targetList.find(p => p.id === id);
-            if (!exists) {
-                targetList.push(player);
-                addLogEntry(`Added ${player.name} to lineup.`);
-                renderBattingOrder(); // Update the UI
-                renderRoster(); // --- Re-render roster to hide plus button ---
-            }
-        }
-
-        async function handleRemovePlayer(e) {
-            e.stopPropagation(); // Prevent drag from starting
-            const id = e.currentTarget.dataset.id;
-            const player = gameState.roster.find(p => p.id === id);
-
-            // Optimistically remove from local state
-            gameState.roster = gameState.roster.filter(p => p.id !== id);
-            gameState.battingOrder.traditional = gameState.battingOrder.traditional.filter(p => p.id !== id);
-            gameState.battingOrder.male = gameState.battingOrder.male.filter(p => p.id !== id);
-            gameState.battingOrder.female = gameState.battingOrder.female.filter(p => p.id !== id);
-            
-            renderRoster();
-            renderBattingOrder();
-            
-            // Remove from Firestore
-            try {
-                // Doc path is now corrected to use appId
-                const playerDocRef = doc(db, `artifacts/${appId}/users/${userId}/roster`, id);
-                await deleteDoc(playerDocRef);
-                if (player) addLogEntry(`Removed ${player.name} from roster.`);
-            } catch (error) {
-                console.error("Error removing player: ", error);
-                // Note: If this fails, the local state will be out of sync
-                // A more robust solution would reload from Firestore, but the listener should handle this
-            }
-        }
-        
-        function handleNextBatter(skipReset = false) {
-            // --- NEW: Only advance batting order if it's the user's team ---
-            if (isUserTeamAtBat() && validateBattingOrder()) {
-                if (gameState.gameMode === 'traditional') {
-                    if (gameState.battingOrder.traditional.length > 0) {
-                        gameState.currentBatterIndex.traditional++;
-                    }
-                } else if (gameState.gameMode === 'wheel') {
-                    if (gameState.nextToBat === 'male') {
-                        if (gameState.battingOrder.male.length > 0) {
-                            gameState.currentBatterIndex.male++;
-                        }
-                        gameState.nextToBat = 'female'; // Alternate
-                    } else {
-                        if (gameState.battingOrder.female.length > 0) {
-                            gameState.currentBatterIndex.female++;
-                        }
-                        gameState.nextToBat = 'male'; // Alternate
-                    }
-                }
-            }
-            
-            if (!skipReset) {
-                 resetCounts(); // Resets to 1-1 (but not runsThisPlay)
-            }
-            highlightCurrentBatter();
-        }
-
-        // --- Drag and Drop Handlers ---
-   
-
+        // --- Drag and Drop Logic ---
         function setupDragAndDrop() {
             const lists = [
                 DOMElements.rosterList, 
@@ -1585,16 +927,9 @@
             const dropTarget = e.currentTarget;
             if (dropTarget.classList.contains('drag-over')) return;
 
-            // --- Validation Logic ---
             const gender = draggedItem.dataset.gender;
-            
-            if (dropTarget.id === 'batting-order-list-male' && gender !== 'male') {
-                return; // Can't drop female in male list
-            }
-            if (dropTarget.id === 'batting-order-list-female' && gender !== 'female') {
-                return; // Can't drop male in female list
-            }
-            // All other drops (to roster, to traditional) are fine
+            if (dropTarget.id === 'batting-order-list-male' && gender !== 'male') return;
+            if (dropTarget.id === 'batting-order-list-female' && gender !== 'female') return;
             
             dropTarget.classList.add('drag-over');
         }
@@ -1609,28 +944,22 @@
             dropTarget.classList.remove('drag-over');
             if (!draggedItem) return;
             
-            // --- Validation on Drop ---
             const gender = draggedItem.dataset.gender;
             if (dropTarget.id === 'batting-order-list-male' && gender !== 'male') return;
             if (dropTarget.id === 'batting-order-list-female' && gender !== 'female') return;
 
-            // Find drop position
             const afterElement = getDragAfterElement(dropTarget, e.clientY);
             const droppedPlayer = JSON.parse(draggedItem.dataset.playerData);
             
-            // --- Update State ---
             const sourceList = getListById(dragSourceListId);
             const targetList = getListById(dropTarget.id);
 
-            // Remove from source list (if not roster)
             if (dragSourceListId !== 'roster-list') {
                 const index = sourceList.findIndex(p => p.id === droppedPlayer.id);
                 if (index > -1) sourceList.splice(index, 1);
             }
 
-            // Add to target list (if not roster)
             if (dropTarget.id !== 'roster-list') {
-                // Ensure player isn't already in the target list (handles moving from roster)
                 const exists = targetList.find(p => p.id === droppedPlayer.id);
                 if (!exists) {
                     if (afterElement) {
@@ -1645,13 +974,8 @@
             }
             
             renderBattingOrder();
+            renderRoster(); 
             addLogEntry(`Batting order updated.`);
-            
-            // --- NEW: Re-render roster if player was added/removed from it ---
-            if (dragSourceListId === 'roster-list' || dropTarget.id === 'roster-list') {
-                renderRoster();
-            }
-            // --- END NEW ---
         }
 
         function getListById(id) {
@@ -1685,262 +1009,451 @@
             }
         }
 
-function setupBaseActions() {
-            // 1. Clicking the base itself opens the modal
-            Object.keys(DOMElements.bases).forEach(baseNumStr => {
-                const baseNum = parseInt(baseNumStr, 10);
-                DOMElements.bases[baseNum].addEventListener('click', () => {
-                    const runner = gameState.bases[baseNum];
-                    if (runner) {
-                        // Runner is present, show context menu
-                        if(baseNum === 1) showModal(DOMElements.baseContextModal1);
-                        else if(baseNum === 2) showModal(DOMElements.baseContextModal2);
-                        else if(baseNum === 3) showModal(DOMElements.baseContextModal3);
-                    }
-                });
-            });
-
-            // 2. Clicking buttons inside the modals
-            DOMElements.baseActionButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const action = e.currentTarget.dataset.action;
-                    // Find parent modal to know which base this is for
-                    const modal = e.currentTarget.closest('div[id^="base-context-modal-"]');
-                    const currentBaseNum = parseInt(modal.id.split('-').pop(), 10);
-                    
-                    if (action === 'cancel') {
-                        hideAllModals();
-                        return;
-                    }
-
-                    const runner = gameState.bases[currentBaseNum];
-                    if (!runner) {
-                        hideAllModals();
-                        return;
-                    }
-                    
-                    // Remove runner from current base
-                    gameState.bases[currentBaseNum] = null;
-
-                    if (action === 'move') {
-                        const targetBaseNum = parseInt(e.currentTarget.dataset.base, 10);
-                        
-                        // Safety check: if target base is occupied, score the occupant to prevent data loss
-                        if (gameState.bases[targetBaseNum]) {
-                           addRuns(1, gameState.bases[targetBaseNum].name, true);
-                        }
-                        
-                        gameState.bases[targetBaseNum] = runner;
-                        addLogEntry(`${runner.name} manual move to ${targetBaseNum}.`, 'info');
-                    } 
-                    else if (action === 'score') {
-                        addRuns(1, runner.name, true);
-                    }
-                    else if (action === 'out') {
-                        // Record the out
-                        addOut(`${runner.name} out on base.`);
-                    }
-                    
-                    updateBases();
-                    hideAllModals();
-                });
-            });
+        // --- Editing and UI Output ---
+        function handleEditOrderToggle() {
+            gameState.isEditingOrder = !gameState.isEditingOrder;
+            DOMElements.editOrderBtn.textContent = gameState.isEditingOrder ? 'Done' : 'Edit';
+            renderBattingOrder();
         }
-        
-        function renumberRunnersOnBase(outRunnerDisplayOrder) {
-            // Get all runners on base
-            const runnersOnBase = [];
-            for (let i = 1; i <= 3; i++) {
-                if (gameState.bases[i]) {
-                    runnersOnBase.push(gameState.bases[i]);
+
+        function handleRemoveFromOrder(e, index, listType) {
+            e.stopPropagation();
+            if (listType === 'traditional') gameState.battingOrder.traditional.splice(index, 1);
+            else if (listType === 'male') gameState.battingOrder.male.splice(index, 1);
+            else if (listType === 'female') gameState.battingOrder.female.splice(index, 1);
+            renderBattingOrder();
+            renderRoster(); 
+        }
+
+        function renderBattingOrder() {
+            DOMElements.battingOrderList.innerHTML = '';
+            DOMElements.battingOrderListMale.innerHTML = '';
+            DOMElements.battingOrderListFemale.innerHTML = '';
+
+            const applyIndicators = (card, idx, curIdx, len) => {
+                if (!isUserTeamAtBat() || len === 0) return;
+                const rel = (idx - (curIdx % len) + len) % len;
+                const dot = document.createElement('span');
+                dot.className = "w-3 h-3 rounded-full mr-3 flex-shrink-0";
+                
+                if (rel === 0) dot.classList.add('bg-green-500'); 
+                else if (rel === 1) dot.classList.add('bg-yellow-500'); 
+                else if (rel === 2) dot.classList.add('border-2', 'border-yellow-500'); 
+                else return;
+                
+                card.prepend(dot);
+            };
+
+            const createCard = (p) => {
+                const el = document.createElement('div');
+                el.className = 'roster-card bg-white p-2 rounded-md shadow-sm flex items-center justify-between text-sm mb-1';
+                el.dataset.id = p.id;
+                el.dataset.gender = p.gender;
+                el.dataset.playerData = JSON.stringify(p);
+                el.draggable = true;
+                
+                const num = p.number ? `(${p.number})` : '';
+                const pos = p.position ? `${p.position} - ` : '';
+                
+                el.innerHTML = `<span class="font-medium text-sm text-gray-800 flex items-center w-full">${pos}${p.name} ${num}</span>`;
+                return el;
+            };
+
+            const tList = gameState.battingOrder.traditional;
+            tList.forEach((p, i) => {
+                const c = createCard(p);
+                applyIndicators(c.querySelector('span'), i, gameState.currentBatterIndex.traditional, tList.length);
+                if (gameState.isEditingOrder) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&minus;'; 
+                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
+                    deleteBtn.onclick = (e) => handleRemoveFromOrder(e, i, 'traditional');
+                    c.appendChild(deleteBtn);
+                }
+                DOMElements.battingOrderList.appendChild(c);
+            });
+
+            const mList = gameState.battingOrder.male;
+            mList.forEach((p, i) => {
+                const c = createCard(p);
+                if (gameState.gameMode === 'wheel' && gameState.nextToBat === 'male') applyIndicators(c.querySelector('span'), i, gameState.currentBatterIndex.male, mList.length);
+                if (gameState.isEditingOrder) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&minus;'; 
+                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
+                    deleteBtn.onclick = (e) => handleRemoveFromOrder(e, i, 'male');
+                    c.appendChild(deleteBtn);
+                }
+                DOMElements.battingOrderListMale.appendChild(c);
+            });
+
+            const fList = gameState.battingOrder.female;
+            fList.forEach((p, i) => {
+                const c = createCard(p);
+                if (gameState.gameMode === 'wheel' && gameState.nextToBat === 'female') applyIndicators(c.querySelector('span'), i, gameState.currentBatterIndex.female, fList.length);
+                if (gameState.isEditingOrder) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&minus;'; 
+                    deleteBtn.className = "ml-2 text-red-500 font-bold text-lg px-2 hover:bg-red-100 rounded-full";
+                    deleteBtn.onclick = (e) => handleRemoveFromOrder(e, i, 'female');
+                    c.appendChild(deleteBtn);
+                }
+                DOMElements.battingOrderListFemale.appendChild(c);
+            });
+            
+            // Validate Order Warnings
+            if (gameState.gameMode === 'traditional' && gameState.battingOrder.traditional.length >= 2) {
+                let isValid = true;
+                for (let i = 1; i < gameState.battingOrder.traditional.length; i++) {
+                    if (gameState.battingOrder.traditional[i].gender === gameState.battingOrder.traditional[i-1].gender) {
+                        isValid = false; break;
+                    }
+                }
+                DOMElements.battingOrderList.classList.toggle('invalid-order', !isValid);
+                DOMElements.orderWarning.classList.toggle('hidden', isValid);
+            } else {
+                DOMElements.battingOrderList.classList.remove('invalid-order');
+                DOMElements.orderWarning.classList.add('hidden');
+            }
+        }
+
+        function handleNextBatter(skipCountReset = false) {
+            if (isUserTeamAtBat()) {
+                if (gameState.gameMode === 'traditional') {
+                    if (gameState.battingOrder.traditional.length > 0) gameState.currentBatterIndex.traditional++;
+                } else {
+                    const currentGender = gameState.nextToBat || 'male';
+                    const list = (currentGender === 'male') ? gameState.battingOrder.male : gameState.battingOrder.female;
+                    if (list.length > 0) gameState.currentBatterIndex[currentGender]++;
+                    gameState.nextToBat = (currentGender === 'male') ? 'female' : 'male';
                 }
             }
-            
-            // --- NEW LOGIC: Also decrement the inning counter ---
-            // This means the next batter will get the "recycled" number
-            gameState.runnerInningCounter--;
-            // --- END NEW LOGIC ---
+            if (!skipCountReset) {
+                gameState.balls = STARTING_BALLS;
+                gameState.strikes = STARTING_STRIKES;
+                gameState.runsThisPlay = 0;
+            }
+            renderBattingOrder();
+            updateScoreboard();
+        }
 
-            // Find all runners with a displayOrder > outRunnerDisplayOrder
-            runnersOnBase.forEach(runner => {
-                if (runner.displayOrder > outRunnerDisplayOrder) {
-                    runner.displayOrder -= 1; // Reduce their number by one
-                }
-            });
+        function showModal(el) {
+            DOMElements.modalOverlay.classList.remove('hidden');
+            [...DOMElements.modalOverlay.children].forEach(c => c.classList.add('hidden'));
+            el.classList.remove('hidden');
+        }
+
+        function hideAllModals() {
+            DOMElements.modalOverlay.classList.add('hidden');
+        }
+
+        function handleGameLogToggle() {
+            gameState.gameLogMinimized = !gameState.gameLogMinimized;
+            if (gameState.gameLogMinimized) {
+                DOMElements.gameLogToggleContent.style.maxHeight = '0px';
+                DOMElements.gameLogToggleContent.style.opacity = '0';
+                DOMElements.gameLogToggleContent.style.marginTop = '0';
+                DOMElements.gameLogToggleBtn.textContent = '+';
+            } else {
+                DOMElements.gameLogToggleContent.style.maxHeight = (gameState.gameLogHeight + 50) + 'px'; 
+                DOMElements.gameLogToggleContent.style.opacity = '1';
+                DOMElements.gameLogToggleContent.style.marginTop = '';
+                DOMElements.gameLogToggleBtn.textContent = '-';
+            }
+        }
+
+        document.addEventListener('click', e => {
+            if (e.target.closest('.hit-type-btn')) {
+                if (gameState.isTransitioning) return;
+                advanceRunnersOnHit(parseInt(e.target.closest('.hit-type-btn').dataset.hitType));
+                hideAllModals();
+            }
+            if (e.target.id === 'force-out-yes') {
+                if (!gameState.isTransitioning) return;
+                const loss = gameState.runsThisPlay;
+                gameState.runsThisInning -= loss;
+                if (gameState.topOfInning) gameState.awayScore -= loss; else gameState.homeScore -= loss;
+                addLogEntry(`Force out: Runs negated (-${loss}).`, 'out');
+                advanceHalfInning();
+                hideAllModals();
+            }
+            if (e.target.id === 'force-out-no') {
+                if (!gameState.isTransitioning) return;
+                advanceHalfInning();
+                hideAllModals();
+            }
+        });
+
+        DOMElements.btnWalk.onclick = () => { 
+            if (gameState.isTransitioning) return;
+            gameState.runsThisPlay = 0; // Reset
             
-            updateBases(); // Update UI with new numbers
+            const batter = getCurrentBatter();
+            const batterName = getBatterName(batter);
+            const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
+            addLogEntry(`${batterName} walks.`, 'info');
+
+            let runsScored = 0;
+            let scoredRunnerName = 'Runner';
+            const isMale = isUserTeamAtBat() && batter && batter.gender === 'male';
+
+            // Standard Force logic for walk
+            if (gameState.bases[1] && gameState.bases[2] && gameState.bases[3]) {
+                runsScored++;
+                scoredRunnerName = gameState.bases[3].name;
+                gameState.bases[3] = gameState.bases[2];
+                gameState.bases[2] = gameState.bases[1];
+                gameState.bases[1] = newRunner;
+            } else if (gameState.bases[1] && gameState.bases[2]) {
+                gameState.bases[3] = gameState.bases[2];
+                gameState.bases[2] = gameState.bases[1];
+                gameState.bases[1] = newRunner;
+            } else if (gameState.bases[1]) {
+                gameState.bases[2] = gameState.bases[1];
+                gameState.bases[1] = newRunner;
+            } else {
+                gameState.bases[1] = newRunner;
+            }
+
+            // Co-Ed Male Walk Rule
+            if (isMale && gameState.bases[1] === newRunner) {
+                addLogEntry(`Male walk rule: ${batterName} advances to 2nd.`, 'info');
+                if (gameState.bases[2]) {
+                    if (gameState.bases[3]) {
+                        runsScored++;
+                        scoredRunnerName = gameState.bases[3].name;
+                    }
+                    gameState.bases[3] = gameState.bases[2];
+                }
+                gameState.bases[2] = gameState.bases[1];
+                gameState.bases[1] = null;
+            }
+
+            if (runsScored > 0) {
+                addRuns(runsScored, scoredRunnerName, true);
+            }
+            
+            updateBases();
+            
+            // Only advance the batter if the walk didn't end the inning via run limit
+            if (!gameState.isTransitioning) {
+                handleNextBatter(); 
+            }
+        };
+        
+        DOMElements.btnHit.onclick = () => {
+            if (gameState.isTransitioning) return;
+            gameState.runsThisPlay = 0; // Reset
+            showModal(DOMElements.hitTypeModal);
+        }
+
+        DOMElements.btnOut.onclick = () => { 
+            if (gameState.isTransitioning) return;
+            gameState.runsThisPlay = 0; // Reset
+            const batter = getCurrentBatter();
+            const batterName = getBatterName(batter);
+            if (!addOut(`${batterName} out.`)) handleNextBatter(); 
+        };
+
+        DOMElements.btnAddBall.onclick = () => { 
+            if (gameState.isTransitioning) return;
+            gameState.runsThisPlay = 0; // Reset
+            if (gameState.balls < 3) { 
+                gameState.balls++; 
+                updateScoreboard(); 
+            } else { 
+                DOMElements.btnWalk.onclick(); 
+            } 
+        };
+
+        DOMElements.btnAddStrike.onclick = () => { 
+            if (gameState.isTransitioning) return;
+            gameState.runsThisPlay = 0; // Reset
+            if (gameState.strikes < 2) { 
+                gameState.strikes++; 
+                updateScoreboard(); 
+            } else { 
+                if (!addOut(`${getBatterName(getCurrentBatter())} strikes out.`)) handleNextBatter(); 
+            } 
+        };
+
+        DOMElements.inningToggle.onclick = handleInningToggle;
+
+        function setupBaseActions() {
+            [1, 2, 3].forEach(b => {
+                DOMElements.bases[b].onclick = () => {
+                    const r = gameState.bases[b];
+                    if (!r) return;
+                    const modal = document.getElementById(`base-context-modal-${b}`);
+                    showModal(modal);
+                };
+            });
+            DOMElements.baseActionButtons.forEach(btn => {
+                btn.onclick = (e) => {
+                    if (gameState.isTransitioning) return;
+                    
+                    const modal = e.target.closest('[id^="base-context-modal-"]');
+                    const b = parseInt(modal.id.split('-').pop());
+                    const action = e.target.dataset.action;
+                    const r = gameState.bases[b];
+                    if (!r) { hideAllModals(); return; }
+
+                    if (action === 'move') {
+                        const target = parseInt(e.target.dataset.base);
+                        gameState.bases[b] = null;
+                        
+                        let currentRunner = r;
+                        let currentTarget = target;
+                        
+                        while (currentRunner) {
+                            if (currentTarget > 3) {
+                                addRuns(1, currentRunner.name, true);
+                                currentRunner = null;
+                            } else {
+                                let displacedRunner = gameState.bases[currentTarget];
+                                gameState.bases[currentTarget] = currentRunner;
+                                currentRunner = displacedRunner;
+                                currentTarget++;
+                            }
+                        }
+                        addLogEntry(`${r.name} moves to ${target}.`);
+                    } else if (action === 'score') {
+                        gameState.bases[b] = null;
+                        addRuns(1, r.name, true);
+                    } else if (action === 'out') {
+                        gameState.bases[b] = null;
+                        addOut(`${r.name} out on base.`);
+                        renumberRunnersOnBase(r.displayOrder);
+                    }
+                    updateBases();
+                    hideAllModals();
+                };
+            });
         }
 
         async function initAuth() {
-            try {
-                // Initialize Firebase
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                onAuthStateChanged(auth, user => {
-                    if (user) {
-                        console.log("User is authenticated:", user.uid);
-                        userId = user.uid;
-                        DOMElements.userIdDisplay.textContent = userId;
-                        // User is signed in, set up Firestore references and listener
-                        
-                        // Use the path compatible with the provided security rules
-                        rosterCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/roster`);
-                        
-                        // Call setupRosterListener wrapped in a short delay to ensure permissions are fully propagated
-                        setTimeout(setupRosterListener, 100); 
-                    } else {
-                        console.log("User is not authenticated.");
-                        userId = null;
-                        DOMElements.userIdDisplay.textContent = 'not signed in';
-                        unsubscribeRoster(); // Stop listening if logged out
-                        gameState.roster = [];
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    userId = user.uid;
+                    DOMElements.userIdDisplay.textContent = userId;
+                    rosterCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/roster`);
+                    unsubscribeRoster = onSnapshot(rosterCollectionRef, snap => {
+                        gameState.roster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                         renderRoster();
-                    }
-                });
-
-                // Sign in Anonymously
-                console.log("Signing in anonymously...");
-                await signInAnonymously(auth);
-
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                DOMElements.userIdDisplay.textContent = 'Error';
-            }
+                        renderBattingOrder();
+                    });
+                }
+            });
+            await signInAnonymously(auth);
         }
-        
-        function setupRosterListener() {
-            if (!rosterCollectionRef) return;
 
-            // Stop any previous listener
-            unsubscribeRoster();
-            
-            console.log("Setting up roster listener at:", rosterCollectionRef.path);
-            
-            unsubscribeRoster = onSnapshot(rosterCollectionRef, (snapshot) => {
-                console.log("Roster data received from Firestore.");
-                const newRoster = [];
-                snapshot.forEach((doc) => {
-                    newRoster.push({ id: doc.id, ...doc.data() });
-                });
-                gameState.roster = newRoster;
-                renderRoster();
-                // When roster reloads, re-render batting order to check for + buttons
-                renderBattingOrder();
-            }, (error) => {
-                console.error("Error with roster snapshot: ", error);
+        function renderRoster() {
+            DOMElements.rosterList.innerHTML = '';
+            gameState.roster.forEach(p => {
+                const el = document.createElement('div');
+                el.className = 'roster-card bg-white p-2 rounded shadow-sm flex justify-between items-center text-sm mb-1';
+                el.dataset.id = p.id;
+                el.dataset.gender = p.gender;
+                el.dataset.playerData = JSON.stringify(p);
+                el.draggable = true;
+                
+                const num = p.number ? `(${p.number})` : '';
+                const pos = p.position ? `${p.position} - ` : '';
+                
+                const inLineup = gameState.battingOrder.traditional.some(x => x.id === p.id) || gameState.battingOrder.male.some(x => x.id === p.id) || gameState.battingOrder.female.some(x => x.id === p.id);
+                
+                el.innerHTML = `
+                    <span class="font-medium text-sm text-gray-800 flex items-center w-full">
+                        <span class="font-bold mr-1 ${p.gender === 'male' ? 'text-blue-600' : 'text-pink-600'}">(${p.gender === 'male' ? 'M' : 'F'})</span> 
+                        ${pos}${p.name} ${num}
+                    </span>
+                    <div class="flex space-x-1">
+                        ${!inLineup ? `<button class="add-btn text-green-600 hover:text-green-800 font-bold text-lg px-2 rounded-md hover:bg-green-100" title="Add to lineup">+</button>` : ''}
+                        <button class="del-btn text-red-500 hover:text-red-700 font-bold text-lg px-2 rounded-md hover:bg-red-100" title="Remove from roster">&times;</button>
+                    </div>`;
+                    
+                el.querySelector('.del-btn').onclick = async () => await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/roster`, p.id));
+                if (!inLineup) el.querySelector('.add-btn').onclick = () => {
+                    if (gameState.gameMode === 'traditional') gameState.battingOrder.traditional.push(p);
+                    else if (p.gender === 'male') gameState.battingOrder.male.push(p); 
+                    else gameState.battingOrder.female.push(p);
+                    renderBattingOrder(); renderRoster();
+                };
+                DOMElements.rosterList.appendChild(el);
             });
         }
 
-        // --- Roster Toggle ---
-        function handleRosterToggle() {
+        DOMElements.addPlayerForm.onsubmit = async e => {
+            e.preventDefault();
+            const name = DOMElements.playerNameInput.value;
+            const number = DOMElements.playerNumberInput.value;
+            const pos = DOMElements.playerPositionInput.value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            await addDoc(rosterCollectionRef, { name, number, pos, gender });
+            DOMElements.playerNameInput.value = ''; DOMElements.playerNumberInput.value = ''; DOMElements.playerPositionInput.value = '';
+        };
+
+        function handleGameModeSelect(e) {
+            const mode = e.currentTarget.id === 'mode-traditional' ? 'traditional' : 'wheel';
+            gameState.gameMode = mode;
+            addLogEntry(`Game mode set to: ${mode}.`);
+            
+            DOMElements.gameModeModal.classList.add('hidden');
+            
+            if (mode === 'traditional') {
+                DOMElements.traditionalContainer.classList.remove('hidden');
+                DOMElements.traditionalContainer.classList.add('flex');
+                DOMElements.wheelOrderContainer.classList.add('hidden');
+                DOMElements.wheelOrderContainer.classList.remove('md:grid');
+                showModal(DOMElements.userTeamModal);
+            } else {
+                DOMElements.traditionalContainer.classList.add('hidden');
+                DOMElements.traditionalContainer.classList.remove('flex');
+                DOMElements.wheelOrderContainer.classList.remove('hidden');
+                DOMElements.wheelOrderContainer.classList.add('md:grid');
+                showModal(DOMElements.whoBatsFirstModal);
+            }
+            renderBattingOrder();
+        }
+
+        function handleWhoBatsFirst(e) {
+            gameState.nextToBat = (e.currentTarget.id === 'start-male') ? 'male' : 'female';
+            addLogEntry(`"Bat the Wheel" mode: ${gameState.nextToBat}s batting first.`);
+            DOMElements.whoBatsFirstModal.classList.add('hidden');
+            showModal(DOMElements.userTeamModal);
+        }
+
+        function handleUserTeamSelect(e) {
+            gameState.userTeam = e.currentTarget.id === 'team-home' ? 'home' : 'away';
+            addLogEntry(`User team set to: ${gameState.userTeam}.`);
+            
+            DOMElements.userTeamModal.classList.add('hidden');
+            hideAllModals(); 
+            
+            updateScoreboard();
+            renderBattingOrder();
+            addLogEntry(`--- Game Start! Top of Inning 1. ---`, 'inning');
+        }
+
+        DOMElements.modeTraditionalBtn.onclick = handleGameModeSelect;
+        DOMElements.modeWheelBtn.onclick = handleGameModeSelect;
+        DOMElements.startMaleBtn.onclick = handleWhoBatsFirst;
+        DOMElements.startFemaleBtn.onclick = handleWhoBatsFirst;
+        DOMElements.teamHomeBtn.onclick = handleUserTeamSelect;
+        DOMElements.teamAwayBtn.onclick = handleUserTeamSelect;
+
+        DOMElements.rosterToggleBtn.onclick = () => {
             gameState.rosterMinimized = !gameState.rosterMinimized;
             DOMElements.rosterToggleContent.style.maxHeight = gameState.rosterMinimized ? '0px' : '1000px';
             DOMElements.rosterToggleContent.style.opacity = gameState.rosterMinimized ? '0' : '1';
             DOMElements.rosterToggleBtn.textContent = gameState.rosterMinimized ? '+' : '-';
-        }
-        DOMElements.rosterToggleBtn.onclick = handleRosterToggle;
+        };
 
-        // --- FIX: Unified handleGameLogToggle usage ---
         DOMElements.gameLogToggleBtn.onclick = handleGameLogToggle;
-        
-        // --- BUTTON HANDLERS ---
-        DOMElements.modeTraditionalBtn.addEventListener('click', handleGameModeSelect);
-        DOMElements.modeWheelBtn.addEventListener('click', handleGameModeSelect);
-        DOMElements.startMaleBtn.addEventListener('click', handleWhoBatsFirst);
-        DOMElements.startFemaleBtn.addEventListener('click', handleWhoBatsFirst);
-        DOMElements.teamHomeBtn.addEventListener('click', handleUserTeamSelect);
-        DOMElements.teamAwayBtn.addEventListener('click', handleUserTeamSelect);
-        DOMElements.editOrderBtn.addEventListener('click', handleEditOrderToggle);
+        DOMElements.editOrderBtn.onclick = handleEditOrderToggle;
 
-        // --- MISSING EVENT LISTENERS RESTORED ---
-        DOMElements.addPlayerForm.addEventListener('submit', handleRosterSubmit);
-        
-        DOMElements.btnWalk.addEventListener('click', () => {
-            // Reset "Runs This Play" only for new actions
-            gameState.runsThisPlay = 0;
-            
-            const batter = getCurrentBatter();
-            advanceRunnersOnWalk(batter);
-            handleNextBatter();
-        });
-
-        DOMElements.btnHit.addEventListener('click', () => {
-            // Reset "Runs This Play" only for new actions
-            gameState.runsThisPlay = 0;
-            showModal(DOMElements.hitTypeModal);
-        });
-
-        DOMElements.btnOut.addEventListener('click', () => {
-            // Reset "Runs This Play" only for new actions
-            gameState.runsThisPlay = 0;
-            
-            const batter = getCurrentBatter();
-            const batterName = getBatterName(batter);
-            const isThirdOut = addOut(`${batterName} is out.`, false); 
-            if (!isThirdOut) {
-                handleNextBatter();
-            }
-        });
-
-        DOMElements.btnAddBall.addEventListener('click', () => {
-            // Reset "Runs This Play" only for new actions
-            gameState.runsThisPlay = 0;
-            
-            if (gameState.balls < 3) {
-                gameState.balls++;
-                updateScoreboard();
-            } else {
-                const batter = getCurrentBatter();
-                advanceRunnersOnWalk(batter);
-                handleNextBatter();
-            }
-        });
-
-        DOMElements.btnAddStrike.addEventListener('click', () => {
-             // Reset "Runs This Play" only for new actions
-             gameState.runsThisPlay = 0;
-             
-             if (gameState.strikes < 2) {
-                gameState.strikes++;
-                updateScoreboard();
-            } else {
-                const batter = getCurrentBatter();
-                const batterName = getBatterName(batter);
-                const isThirdOut = addOut(`${batterName} strikes out.`, false);
-                 if (!isThirdOut) {
-                    handleNextBatter();
-                }
-            }
-        });
-        
-        // --- Event Listeners for HIT Buttons (Single, Double, etc.) ---
-        DOMElements.hitTypeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const hitType = parseInt(e.currentTarget.dataset.hitType, 10);
-                const batter = getCurrentBatter();
-                advanceRunnersOnHit(batter, hitType); 
-            });
-        });
-
-        // --- Event Listener for Cancel Hit Button ---
-        DOMElements.cancelHitButton.addEventListener('click', () => {
-            hideAllModals();
-        });
-        
-        // --- Event Listeners for Force Out Modal ---
-        DOMElements.forceOutYesBtn.addEventListener('click', () => handleForceOut(true));
-        DOMElements.forceOutNoBtn.addEventListener('click', () => handleForceOut(false));
-
-        DOMElements.btnEndGame.addEventListener('click', () => {
-             // Show the custom modal instead of confirm()
-             showModal(DOMElements.endGameModal);
-        });
-        
-        // --- Event Listeners for Custom End Game Modal ---
-        document.getElementById('end-game-yes').addEventListener('click', () => {
-             // Reset Game State vars
+        // --- End Game & Game Over Listeners ---
+        const resetGame = () => {
              gameState.homeScore = 0;
              gameState.awayScore = 0;
              gameState.inning = 1;
@@ -1952,28 +1465,27 @@ function setupBaseActions() {
              gameState.runsThisPlay = 0;
              gameState.runnerInningCounter = 0;
              gameState.bases = { 1: null, 2: null, 3: null };
-             
-             // Reset Batter Indexes
              gameState.currentBatterIndex = { traditional: 0, male: 0, female: 0 };
-             
-             // Clear Log
              gameState.gameLog = [];
+             gameState.isTransitioning = false;
              DOMElements.gameLogList.innerHTML = '';
              
-             // Update UI
              updateScoreboard();
              updateBases();
              renderBattingOrder();
              
              hideAllModals();
-             // Re-prompt for side
              showModal(DOMElements.userTeamModal);
              addLogEntry("New Game Started.");
-        });
+        };
 
-        document.getElementById('end-game-no').addEventListener('click', () => {
-            hideAllModals();
-        });
+        DOMElements.btnEndGame.onclick = () => {
+            if (gameState.isTransitioning) return;
+            showModal(DOMElements.endGameModal);
+        };
+        DOMElements.endGameYesBtn.onclick = resetGame;
+        DOMElements.endGameNoBtn.onclick = hideAllModals;
+        DOMElements.gameOverCloseBtn.onclick = resetGame;
 
         function init() {
             updateScoreboard();
@@ -1981,14 +1493,12 @@ function setupBaseActions() {
             showModal(DOMElements.gameModeModal);
             initAuth();
             setupBaseActions();
-            handleRosterToggle();
-            handleGameLogToggle();
-            setupDragAndDrop(); // Added setupDragAndDrop to init
-            setupGameLogResize(); // Added game log resize to init
+            setupGameLogResize();
+            setupDragAndDrop();
         }
 
         document.addEventListener('DOMContentLoaded', init);
-        console.log("Version 2 loaded.");
+
     </script>
 </body>
 </html>
