@@ -1686,8 +1686,69 @@
             });
         }
 
+        function restoreUIState() {
+            // 1. Restore Game Mode Containers
+            if (gameState.gameMode) {
+                if (gameState.gameMode === 'traditional') {
+                    if (DOMElements.traditionalContainer) {
+                        DOMElements.traditionalContainer.classList.remove('hidden');
+                        DOMElements.traditionalContainer.classList.add('flex');
+                    }
+                    if (DOMElements.wheelOrderContainer) {
+                        DOMElements.wheelOrderContainer.classList.add('hidden');
+                        DOMElements.wheelOrderContainer.classList.remove('md:grid');
+                    }
+                    if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.add('hidden');
+                } else {
+                    if (DOMElements.traditionalContainer) {
+                        DOMElements.traditionalContainer.classList.add('hidden');
+                        DOMElements.traditionalContainer.classList.remove('flex');
+                    }
+                    if (DOMElements.wheelOrderContainer) {
+                        DOMElements.wheelOrderContainer.classList.remove('hidden');
+                        DOMElements.wheelOrderContainer.classList.add('md:grid');
+                    }
+                    if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.remove('hidden');
+                }
+            }
+
+            // 2. Restore Log Toggle state
+            if (gameState.gameLogMinimized) {
+                if (DOMElements.gameLogToggleContent) {
+                    DOMElements.gameLogToggleContent.style.maxHeight = '0px';
+                    DOMElements.gameLogToggleContent.style.opacity = '0';
+                    DOMElements.gameLogToggleContent.style.marginTop = '0';
+                }
+                if (DOMElements.gameLogToggleBtn) DOMElements.gameLogToggleBtn.textContent = '+';
+            } else {
+                if (DOMElements.gameLogToggleContent) {
+                    DOMElements.gameLogToggleContent.style.maxHeight = (gameState.gameLogHeight + 50) + 'px'; 
+                    DOMElements.gameLogToggleContent.style.opacity = '1';
+                    DOMElements.gameLogToggleContent.style.marginTop = '';
+                }
+                if (DOMElements.gameLogToggleBtn) DOMElements.gameLogToggleBtn.textContent = '-';
+            }
+
+            // 3. Restore Roster Toggle state
+            if (gameState.rosterMinimized) {
+                if (DOMElements.rosterToggleContent) {
+                    DOMElements.rosterToggleContent.style.maxHeight = '0px';
+                    DOMElements.rosterToggleContent.style.opacity = '0';
+                }
+                if (DOMElements.rosterToggleBtn) DOMElements.rosterToggleBtn.textContent = '+';
+            } else {
+                if (DOMElements.rosterToggleContent) {
+                    DOMElements.rosterToggleContent.style.maxHeight = '1000px';
+                    DOMElements.rosterToggleContent.style.opacity = '1';
+                }
+                if (DOMElements.rosterToggleBtn) DOMElements.rosterToggleBtn.textContent = '-';
+            }
+        }
+
         function init() {
             loadLocalState();
+            
+            restoreUIState();
             
             updateScoreboard();
             updateBases();
