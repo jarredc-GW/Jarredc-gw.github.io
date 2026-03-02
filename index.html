@@ -1486,7 +1486,16 @@
                 const num = p.number ? `(${p.number})` : '';
                 const pos = p.position ? `${p.position} - ` : '';
                 
-                const inLineup = gameState.battingOrder.traditional.some(x => x.id === p.id) || gameState.battingOrder.male.some(x => x.id === p.id) || gameState.battingOrder.female.some(x => x.id === p.id);
+                // Only consider players "in lineup" based on the CURRENT game mode's arrays
+                let inLineup = false;
+                if (gameState.gameMode === 'traditional') {
+                    inLineup = gameState.battingOrder.traditional.some(x => x.id === p.id);
+                } else if (gameState.gameMode === 'wheel') {
+                    inLineup = gameState.battingOrder.male.some(x => x.id === p.id) || gameState.battingOrder.female.some(x => x.id === p.id);
+                } else {
+                    // Fallback if no mode selected
+                    inLineup = gameState.battingOrder.traditional.some(x => x.id === p.id) || gameState.battingOrder.male.some(x => x.id === p.id) || gameState.battingOrder.female.some(x => x.id === p.id);
+                }
                 
                 el.innerHTML = `
                     <span class="font-medium text-sm text-gray-800 flex items-center w-full">
@@ -1541,6 +1550,13 @@
 
         function handleGameModeSelect(e) {
             const mode = e.currentTarget.id === 'mode-traditional' ? 'traditional' : 'wheel';
+            
+            // Clear batting order arrays if user switches to a different game mode
+            if (gameState.gameMode !== null && gameState.gameMode !== mode) {
+                gameState.battingOrder = { traditional: [], male: [], female: [] };
+                gameState.currentBatterIndex = { traditional: 0, male: 0, female: 0 };
+            }
+
             gameState.gameMode = mode;
             addLogEntry(`Game mode set to: ${mode}.`);
             
@@ -1569,7 +1585,11 @@
                 if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.remove('hidden');
                 if (DOMElements.whoBatsFirstModal) showModal(DOMElements.whoBatsFirstModal);
             }
+            
+            // Ensure UI cards update properly to show "+" buttons for the empty lineup
+            renderRoster();
             renderBattingOrder();
+            saveLocalState();
         }
 
         function handleWhoBatsFirst(e) {
