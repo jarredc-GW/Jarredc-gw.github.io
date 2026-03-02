@@ -748,7 +748,6 @@
         function advanceHalfInning() {
             if (gameState.isGameOver) return;
             
-            handleNextBatter(true);
             gameState.outs = 0;
             gameState.runsThisInning = 0;
             gameState.runnerInningCounter = 0;
@@ -925,9 +924,7 @@
             scored.forEach(n => addRuns(1, n, true));
             updateBases();
             
-            if (!gameState.isTransitioning) {
-                handleNextBatter();
-            }
+            handleNextBatter();
         }
 
         // --- Drag and Drop Logic ---
@@ -1230,7 +1227,6 @@
             if (!skipCountReset) {
                 gameState.balls = STARTING_BALLS;
                 gameState.strikes = STARTING_STRIKES;
-                gameState.runsThisPlay = 0;
             }
             renderBattingOrder();
             updateScoreboard();
@@ -1342,9 +1338,7 @@
                 
                 updateBases();
                 
-                if (!gameState.isTransitioning) {
-                    handleNextBatter(); 
-                }
+                handleNextBatter(); 
             };
         }
         
@@ -1362,7 +1356,8 @@
                 gameState.runsThisPlay = 0; // Reset
                 const batter = getCurrentBatter();
                 const batterName = getBatterName(batter);
-                if (!addOut(`${batterName} out.`)) handleNextBatter(); 
+                addOut(`${batterName} out.`);
+                handleNextBatter(); 
             };
         }
 
@@ -1387,7 +1382,8 @@
                     gameState.strikes++; 
                     updateScoreboard(); 
                 } else { 
-                    if (!addOut(`${getBatterName(getCurrentBatter())} strikes out.`)) handleNextBatter(); 
+                    addOut(`${getBatterName(getCurrentBatter())} strikes out.`);
+                    handleNextBatter(); 
                 } 
             };
         }
