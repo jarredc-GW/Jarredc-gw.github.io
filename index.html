@@ -252,6 +252,47 @@
             <button id="close-settings-btn" class="w-full mt-8 py-3 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 transition-colors">Save Settings</button>
         </div>
 
+        <!-- Stats Modal -->
+        <div id="stats-modal" class="bg-white rounded-lg shadow-xl p-4 sm:p-6 max-w-3xl w-full hidden flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Player Season Stats</h2>
+                <button id="close-stats-btn" class="text-gray-500 hover:text-gray-700 bg-gray-100 rounded p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto overflow-y-auto flex-grow rounded-lg border border-gray-200 mb-4">
+                <table class="min-w-full text-left text-sm whitespace-nowrap">
+                    <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-xs">
+                        <tr>
+                            <th scope="col" class="px-3 py-3 border-x border-gray-200 font-bold text-gray-700 sticky left-0 bg-gray-50 z-10">Name</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Total At Bats (Hits + Outs + Strikeouts)">TAB</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Hits">H</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Walks">W</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Strikeouts">SO</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Batting Average">BA</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Average Base Reached On Hit">BROH</th>
+                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Runs Batted In">RBI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body" class="bg-white">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex-shrink-0 border-t border-gray-200 pt-4">
+                <button id="clear-stats-btn" class="w-full py-2 bg-red-100 text-red-600 font-bold rounded-lg hover:bg-red-200 transition-colors">Clear All Stats</button>
+                <div id="clear-stats-confirm" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex-col items-center">
+                    <p class="text-sm text-red-800 mb-3 font-medium">Are you sure? This cannot be undone.</p>
+                    <div class="flex space-x-3 w-full">
+                        <button id="confirm-clear-yes" class="flex-1 py-2 bg-red-600 text-white rounded-md font-bold hover:bg-red-700 transition-colors">Yes, Clear</button>
+                        <button id="confirm-clear-no" class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-md font-bold hover:bg-gray-400 transition-colors">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- "Hit Type" Modal -->
         <div id="hit-type-modal" class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full hidden">
             <h2 class="text-xl font-bold text-center mb-6">Select Hit Type</h2>
@@ -345,18 +386,15 @@
         
         <!-- Left Column -->
         <div class="w-full md:w-1/2 p-4 flex flex-col h-auto md:h-full overflow-y-auto bg-white shadow-lg z-10">
-            
-            <!-- Mobile Settings Button -->
-            <button id="settings-btn-mobile" class="w-full mb-3 py-2 bg-gray-200 text-gray-700 rounded-md font-bold hover:bg-gray-300 md:hidden flex justify-center items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Settings
-            </button>
 
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xl font-bold text-gray-800">Roster Management</h2>
-                    <div class="flex space-x-2">
-                        <button id="settings-btn-desktop" class="hidden md:flex w-8 h-8 justify-center items-center bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300" title="Settings">
+                    <h2 class="text-xl font-bold text-gray-800 flex-shrink-0 mr-2">Roster Management</h2>
+                    <div class="flex space-x-2 flex-shrink-0">
+                        <button id="stats-btn" class="flex w-8 h-8 justify-center items-center bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors" title="Player Stats">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </button>
+                        <button id="settings-btn" class="flex w-8 h-8 justify-center items-center bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors" title="Settings">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
                         <button id="roster-toggle-btn" class="w-8 h-8 flex justify-center items-center text-lg font-bold bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">-</button>
@@ -528,8 +566,8 @@
                 </div>
             </div>
             
-            <div class="w-full md:h-2/3 flex-grow min-h-[350px] md:min-h-0 flex items-center justify-center bg-white rounded-lg shadow-xl p-4 overflow-hidden relative">
-                <div class="baseball-diamond">
+            <div class="w-full md:h-2/3 flex-grow min-h-0 flex items-center justify-center bg-white rounded-lg shadow-xl p-4 overflow-hidden relative" style="container-type: size;">
+                <div class="baseball-diamond" style="width: 100cqmin; height: 100cqmin; max-width: 500px; max-height: 500px; position: relative; margin: 0 auto;">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full absolute inset-0">
                         <path d="M 50 10 L 90 50 L 50 90 L 10 50 Z" fill="#689f38" stroke="#a5d6a7" stroke-width="1"/>
                         <path d="M 50 90 L 90 50 L 50 10 L 10 50 Z" fill="none" stroke="#d2b48c" stroke-width="2"/>
@@ -547,7 +585,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         let firebaseConfig;
         let currentAppId;
@@ -611,6 +649,7 @@
             isTransitioning: false,
             isGameOver: false,
             isEditingOrder: false,
+            activePlayBatterId: null, // Tracks batter for RBI assignments on manual plays
             settings: {
                 mensWalkRule: true,
                 enforceCoedRules: true,
@@ -724,6 +763,7 @@
             // Settings DOM Elements
             settingsBtnMobile: document.getElementById('settings-btn-mobile'),
             settingsBtnDesktop: document.getElementById('settings-btn-desktop'),
+            settingsBtn: document.getElementById('settings-btn'), // Now part of header
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsBtn: document.getElementById('close-settings-btn'),
             coedSettingsContainer: document.getElementById('coed-settings-container'),
@@ -733,6 +773,16 @@
             settingRunLimitDisplay: document.getElementById('setting-run-limit-display'),
             settingOpenInnings: document.getElementById('setting-open-innings'),
             settingAllowTies: document.getElementById('setting-allow-ties'),
+
+            // Stats Elements
+            statsBtn: document.getElementById('stats-btn'),
+            statsModal: document.getElementById('stats-modal'),
+            closeStatsBtn: document.getElementById('close-stats-btn'),
+            statsTableBody: document.getElementById('stats-table-body'),
+            clearStatsBtn: document.getElementById('clear-stats-btn'),
+            clearStatsConfirm: document.getElementById('clear-stats-confirm'),
+            confirmClearYes: document.getElementById('confirm-clear-yes'),
+            confirmClearNo: document.getElementById('confirm-clear-no'),
         };
 
         // --- Game Log Functions ---
@@ -750,13 +800,43 @@
             
             if (!gameState.gameLog) gameState.gameLog = [];
             gameState.gameLog.unshift({ html: htmlString });
-            if (gameState.gameLog.length > 50) gameState.gameLog.pop(); // Keep log size manageable
+            if (gameState.gameLog.length > 50) gameState.gameLog.pop(); 
             
             if (DOMElements.gameLogList) {
                 DOMElements.gameLogList.prepend(entry);
             }
             saveLocalState();
         }
+
+        // --- Active Batter Clear Helper ---
+        function clearActiveBatter() {
+            gameState.activePlayBatterId = null;
+        }
+
+        // --- Async Stat Updater ---
+        async function updateBatterStat(playerId, statChanges) {
+            if (!playerId) return;
+            const playerIndex = gameState.roster.findIndex(p => p.id === playerId);
+            if (playerIndex === -1) return;
+
+            const player = gameState.roster[playerIndex];
+            if (!player.stats) player.stats = { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 };
+            
+            for (const key in statChanges) {
+                player.stats[key] = (player.stats[key] || 0) + statChanges[key];
+            }
+            
+            saveLocalState();
+
+            if (!useLocalRoster && userId) {
+                try {
+                    await updateDoc(doc(db, `artifacts/${currentAppId}/users/${userId}/roster`, playerId), { stats: player.stats });
+                } catch (e) {
+                    console.error('Error updating stats online:', e);
+                }
+            }
+        }
+
 
         // --- Game Log Resize Logic ---
         function setupGameLogResize() {
@@ -878,6 +958,7 @@
         function advanceHalfInning() {
             if (gameState.isGameOver) return;
             
+            clearActiveBatter();
             handleNextBatter(true);
             gameState.outs = 0;
             gameState.runsThisInning = 0;
@@ -967,6 +1048,10 @@
                 gameState.homeScore += count;
             }
 
+            if (gameState.activePlayBatterId) {
+                updateBatterStat(gameState.activePlayBatterId, { rbi: count });
+            }
+
             // Walk-off check (bottom of 7th or later, home team takes the lead)
             if (gameState.inning >= 7 && !gameState.topOfInning && gameState.homeScore > gameState.awayScore) {
                 updateScoreboard();
@@ -983,6 +1068,12 @@
                 if (overage > 0) {
                     if (gameState.topOfInning) gameState.awayScore -= overage;
                     else gameState.homeScore -= overage;
+                    
+                    // Revert RBI if run overage negates it
+                    if (gameState.activePlayBatterId) {
+                        updateBatterStat(gameState.activePlayBatterId, { rbi: -overage });
+                    }
+                    
                     addLogEntry(`Run limit of ${gameState.settings.runLimit} reached. (-${overage} run${overage > 1 ? 's' : ''})`, 'info');
                 }
                 gameState.runsThisInning = gameState.settings.runLimit;
@@ -1020,6 +1111,11 @@
             const hitNames = ['Single', 'Double', 'Triple', 'Home Run'];
             addLogEntry(`${batterName} hits for ${hitNames[hitType - 1]}.`, 'info');
             
+            if (batter) {
+                gameState.activePlayBatterId = batter.id;
+                updateBatterStat(batter.id, { tab: 1, h: 1, tb: hitType });
+            }
+
             const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
             const scored = [];
             
@@ -1383,6 +1479,12 @@
             DOMElements.modalOverlay.classList.remove('hidden');
             [...DOMElements.modalOverlay.children].forEach(c => c.classList.add('hidden'));
             el.classList.remove('hidden');
+            
+            // Reset confirm dialog if showing clear stats modal
+            if(el.id === 'stats-modal') {
+                DOMElements.clearStatsConfirm.classList.add('hidden');
+                DOMElements.clearStatsBtn.classList.remove('hidden');
+            }
         }
 
         function hideAllModals() {
@@ -1431,7 +1533,7 @@
             }
         }
 
-        DOMElements.btnUndo.addEventListener('click', () => {
+        DOMElements.btnUndo.addEventListener('click', async () => {
             if (stateHistory.length === 0 || gameState.isTransitioning) return;
             
             const prevState = stateHistory.pop();
@@ -1445,6 +1547,17 @@
             saveLocalState();
             localStorage.setItem('softball_history', JSON.stringify(stateHistory));
             
+            // Sync reverted stats to cloud
+            if (!useLocalRoster && userId) {
+                for (let player of gameState.roster) {
+                    if(player.stats) {
+                        try {
+                            await updateDoc(doc(db, `artifacts/${currentAppId}/users/${userId}/roster`, player.id), { stats: player.stats });
+                        } catch(e) {}
+                    }
+                }
+            }
+            
             if (stateHistory.length === 0) {
                 DOMElements.btnUndo.disabled = true;
                 DOMElements.btnUndo.classList.add('opacity-50', 'cursor-not-allowed');
@@ -1454,7 +1567,7 @@
             hideAllModals();
         });
 
-        // --- Settings Menu Handlers ---
+        // --- Modals (Settings & Stats) Handlers ---
         function openSettings() {
             DOMElements.settingMensWalk.checked = gameState.settings.mensWalkRule;
             DOMElements.settingCoedRule.checked = gameState.settings.enforceCoedRules;
@@ -1488,15 +1601,93 @@
                 renderBattingOrder();
             }
         }
+
+        function openStats() {
+            DOMElements.statsTableBody.innerHTML = '';
+            
+            gameState.roster.forEach(player => {
+                const s = player.stats || { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 };
+                const tab = s.tab || 0;
+                const h = s.h || 0;
+                const w = s.w || 0;
+                const so = s.so || 0;
+                const tb = s.tb || 0;
+                const rbi = s.rbi || 0;
+                
+                let ba = '.000';
+                if (tab > 0) ba = (h / tab).toFixed(3).replace(/^0+/, '');
+                
+                let broh = '0.0';
+                if (h > 0) broh = (tb / h).toFixed(1);
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-200 hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-3 py-3 border-x border-gray-200 font-semibold text-gray-800 sticky left-0 bg-white shadow-[1px_0_0_0_#e5e7eb]">${player.name}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${tab}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-800">${h}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${w}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${so}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-blue-600">${ba}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-700">${broh}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-green-600">${rbi}</td>
+                `;
+                DOMElements.statsTableBody.appendChild(tr);
+            });
+
+            showModal(DOMElements.statsModal);
+        }
+
+        // Stats UI Listeners
+        if (DOMElements.statsBtn) DOMElements.statsBtn.addEventListener('click', openStats);
+        if (DOMElements.closeStatsBtn) DOMElements.closeStatsBtn.addEventListener('click', hideAllModals);
         
-        DOMElements.settingsBtnMobile.addEventListener('click', openSettings);
-        DOMElements.settingsBtnDesktop.addEventListener('click', openSettings);
-        DOMElements.closeSettingsBtn.addEventListener('click', saveSettings);
-        DOMElements.settingRunLimit.addEventListener('input', (e) => {
-            DOMElements.settingRunLimitDisplay.textContent = e.target.value == 0 ? 'Unlimited' : `${e.target.value} Runs`;
-        });
+        if (DOMElements.clearStatsBtn) {
+            DOMElements.clearStatsBtn.addEventListener('click', () => {
+                DOMElements.clearStatsBtn.classList.add('hidden');
+                DOMElements.clearStatsConfirm.classList.remove('hidden');
+                DOMElements.clearStatsConfirm.classList.add('flex');
+            });
+        }
+
+        if (DOMElements.confirmClearNo) {
+            DOMElements.confirmClearNo.addEventListener('click', () => {
+                DOMElements.clearStatsConfirm.classList.add('hidden');
+                DOMElements.clearStatsConfirm.classList.remove('flex');
+                DOMElements.clearStatsBtn.classList.remove('hidden');
+            });
+        }
+
+        if (DOMElements.confirmClearYes) {
+            DOMElements.confirmClearYes.addEventListener('click', async () => {
+                for (let player of gameState.roster) {
+                    player.stats = { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 };
+                    if (!useLocalRoster && userId) {
+                        try {
+                            await updateDoc(doc(db, `artifacts/${currentAppId}/users/${userId}/roster`, player.id), { stats: player.stats });
+                        } catch (e) {
+                            console.error('Error clearing stats online', e);
+                        }
+                    }
+                }
+                saveLocalState();
+                openStats(); // Refresh table inline
+            });
+        }
+        
+        // Settings UI Listeners
+        if (DOMElements.settingsBtn) DOMElements.settingsBtn.addEventListener('click', openSettings);
+        if (DOMElements.settingsBtnMobile) DOMElements.settingsBtnMobile.addEventListener('click', openSettings);
+        if (DOMElements.settingsBtnDesktop) DOMElements.settingsBtnDesktop.addEventListener('click', openSettings);
+        if (DOMElements.closeSettingsBtn) DOMElements.closeSettingsBtn.addEventListener('click', saveSettings);
+        if (DOMElements.settingRunLimit) {
+            DOMElements.settingRunLimit.addEventListener('input', (e) => {
+                DOMElements.settingRunLimitDisplay.textContent = e.target.value == 0 ? 'Unlimited' : `${e.target.value} Runs`;
+            });
+        }
 
 
+        // --- Gameplay Action Listeners ---
         document.addEventListener('click', e => {
             if (e.target.closest('.hit-type-btn')) {
                 if (gameState.isTransitioning || gameState.isGameOver) return;
@@ -1509,6 +1700,12 @@
                 const loss = gameState.runsThisPlay;
                 gameState.runsThisInning -= loss;
                 if (gameState.topOfInning) gameState.awayScore -= loss; else gameState.homeScore -= loss;
+                
+                // Remove RBI that was given erroneously on force out
+                if (gameState.activePlayBatterId) {
+                    updateBatterStat(gameState.activePlayBatterId, { rbi: -loss });
+                }
+
                 addLogEntry(`Force out: Runs negated (-${loss}).`, 'out');
                 advanceHalfInning();
                 hideAllModals();
@@ -1520,170 +1717,213 @@
             }
         });
 
-        DOMElements.btnWalk.onclick = () => { 
-            if (gameState.isTransitioning || gameState.isGameOver) return;
-            saveHistory();
-            gameState.runsThisPlay = 0; // Reset
-            
-            const batter = getCurrentBatter();
-            const batterName = getBatterName(batter);
-            const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
-            addLogEntry(`${batterName} walks.`, 'info');
-
-            let runsScored = 0;
-            let scoredRunnerName = 'Runner';
-            const isMale = isUserTeamAtBat() && batter && batter.gender === 'male';
-
-            // Standard Force logic for walk
-            if (gameState.bases[1] && gameState.bases[2] && gameState.bases[3]) {
-                runsScored++;
-                scoredRunnerName = gameState.bases[3].name;
-                gameState.bases[3] = gameState.bases[2];
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else if (gameState.bases[1] && gameState.bases[2]) {
-                gameState.bases[3] = gameState.bases[2];
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else if (gameState.bases[1]) {
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = newRunner;
-            } else {
-                gameState.bases[1] = newRunner;
-            }
-
-                // Co-Ed Male Walk Rule (Based on League Type and Setting)
-            if (gameState.leagueType === 'coed' && gameState.settings.mensWalkRule && isMale && gameState.bases[1] === newRunner) {
-                addLogEntry(`Male walk rule: ${batterName} advances to 2nd.`, 'info');
-                if (gameState.bases[2]) {
-                    if (gameState.bases[3]) {
-                        runsScored++;
-                        scoredRunnerName = gameState.bases[3].name;
-                    }
-                    gameState.bases[3] = gameState.bases[2];
+        if (DOMElements.btnWalk) {
+            DOMElements.btnWalk.onclick = () => { 
+                if (gameState.isTransitioning || gameState.isGameOver) return;
+                saveHistory();
+                gameState.runsThisPlay = 0; 
+                
+                const batter = getCurrentBatter();
+                const batterName = getBatterName(batter);
+                
+                if (batter) {
+                    gameState.activePlayBatterId = batter.id;
+                    updateBatterStat(batter.id, { w: 1 });
                 }
-                gameState.bases[2] = gameState.bases[1];
-                gameState.bases[1] = null;
-            }
 
-            if (runsScored > 0) {
-                addRuns(runsScored, scoredRunnerName, true);
-            }
-            
-            updateBases();
-            
-            if (!gameState.isTransitioning && !gameState.isGameOver) {
-                handleNextBatter(); 
-            }
-        };
+                const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
+                addLogEntry(`${batterName} walks.`, 'info');
+
+                let runsScored = 0;
+                let scoredRunnerName = 'Runner';
+                const isMale = isUserTeamAtBat() && batter && batter.gender === 'male';
+
+                // Standard Force logic for walk
+                if (gameState.bases[1] && gameState.bases[2] && gameState.bases[3]) {
+                    runsScored++;
+                    scoredRunnerName = gameState.bases[3].name;
+                    gameState.bases[3] = gameState.bases[2];
+                    gameState.bases[2] = gameState.bases[1];
+                    gameState.bases[1] = newRunner;
+                } else if (gameState.bases[1] && gameState.bases[2]) {
+                    gameState.bases[3] = gameState.bases[2];
+                    gameState.bases[2] = gameState.bases[1];
+                    gameState.bases[1] = newRunner;
+                } else if (gameState.bases[1]) {
+                    gameState.bases[2] = gameState.bases[1];
+                    gameState.bases[1] = newRunner;
+                } else {
+                    gameState.bases[1] = newRunner;
+                }
+
+                    // Co-Ed Male Walk Rule (Based on League Type and Setting)
+                if (gameState.leagueType === 'coed' && gameState.settings.mensWalkRule && isMale && gameState.bases[1] === newRunner) {
+                    addLogEntry(`Male walk rule: ${batterName} advances to 2nd.`, 'info');
+                    if (gameState.bases[2]) {
+                        if (gameState.bases[3]) {
+                            runsScored++;
+                            scoredRunnerName = gameState.bases[3].name;
+                        }
+                        gameState.bases[3] = gameState.bases[2];
+                    }
+                    gameState.bases[2] = gameState.bases[1];
+                    gameState.bases[1] = null;
+                }
+
+                if (runsScored > 0) {
+                    addRuns(runsScored, scoredRunnerName, true);
+                }
+                
+                updateBases();
+                
+                if (!gameState.isTransitioning && !gameState.isGameOver) {
+                    handleNextBatter(); 
+                }
+            };
+        }
         
-        DOMElements.btnHit.onclick = () => {
-            if (gameState.isTransitioning || gameState.isGameOver) return;
-            gameState.runsThisPlay = 0; // Reset
-            showModal(DOMElements.hitTypeModal);
+        if (DOMElements.btnHit) {
+            DOMElements.btnHit.onclick = () => {
+                if (gameState.isTransitioning || gameState.isGameOver) return;
+                gameState.runsThisPlay = 0; // Reset
+                showModal(DOMElements.hitTypeModal);
+            }
         }
 
-        DOMElements.btnOut.onclick = () => { 
-            if (gameState.isTransitioning || gameState.isGameOver) return;
-            saveHistory();
-            gameState.runsThisPlay = 0; // Reset
-            const batter = getCurrentBatter();
-            const batterName = getBatterName(batter);
-            if (!addOut(`${batterName} out.`)) handleNextBatter(); 
-        };
+        if (DOMElements.btnOut) {
+            DOMElements.btnOut.onclick = () => { 
+                if (gameState.isTransitioning || gameState.isGameOver) return;
+                saveHistory();
+                gameState.runsThisPlay = 0; 
+                
+                const batter = getCurrentBatter();
+                if (batter) {
+                    gameState.activePlayBatterId = batter.id;
+                    updateBatterStat(batter.id, { tab: 1 });
+                }
+                
+                const batterName = getBatterName(batter);
+                if (!addOut(`${batterName} out.`)) handleNextBatter(); 
+            };
+        }
 
-        DOMElements.btnAddBall.onclick = () => { 
-            if (gameState.isTransitioning || gameState.isGameOver) return;
-            saveHistory();
-            gameState.runsThisPlay = 0; // Reset
-            if (gameState.balls < 3) { 
-                gameState.balls++; 
-                updateScoreboard(); 
-            } else { 
-                DOMElements.btnWalk.onclick(); 
-            } 
-        };
+        if (DOMElements.btnAddBall) {
+            DOMElements.btnAddBall.onclick = () => { 
+                if (gameState.isTransitioning || gameState.isGameOver) return;
+                saveHistory();
+                clearActiveBatter(); // New pitch sequence removes active play
+                gameState.runsThisPlay = 0; 
+                
+                if (gameState.balls < 3) { 
+                    gameState.balls++; 
+                    updateScoreboard(); 
+                } else { 
+                    DOMElements.btnWalk.onclick(); 
+                } 
+            };
+        }
 
-        DOMElements.btnAddStrike.onclick = () => { 
-            if (gameState.isTransitioning || gameState.isGameOver) return;
-            saveHistory();
-            gameState.runsThisPlay = 0; // Reset
-            if (gameState.strikes < 2) { 
-                gameState.strikes++; 
-                updateScoreboard(); 
-            } else { 
-                if (!addOut(`${getBatterName(getCurrentBatter())} strikes out.`)) handleNextBatter(); 
-            } 
-        };
+        if (DOMElements.btnAddStrike) {
+            DOMElements.btnAddStrike.onclick = () => { 
+                if (gameState.isTransitioning || gameState.isGameOver) return;
+                saveHistory();
+                gameState.runsThisPlay = 0; 
+                
+                if (gameState.strikes < 2) { 
+                    clearActiveBatter(); // New pitch sequence removes active play
+                    gameState.strikes++; 
+                    updateScoreboard(); 
+                } else { 
+                    // Strikeout
+                    const batter = getCurrentBatter();
+                    if (batter) {
+                        gameState.activePlayBatterId = batter.id;
+                        updateBatterStat(batter.id, { tab: 1, so: 1 });
+                    }
+                    
+                    if (!addOut(`${getBatterName(batter)} strikes out.`)) handleNextBatter(); 
+                } 
+            };
+        }
 
-        DOMElements.inningToggle.onclick = handleInningToggle;
+        if (DOMElements.inningToggle) DOMElements.inningToggle.onclick = handleInningToggle;
 
         function setupBaseActions() {
             [1, 2, 3].forEach(b => {
-                DOMElements.bases[b].onclick = () => {
-                    const r = gameState.bases[b];
-                    if (!r) return;
-                    const modal = document.getElementById(`base-context-modal-${b}`);
-                    showModal(modal);
-                };
+                if (DOMElements.bases[b]) {
+                    DOMElements.bases[b].onclick = () => {
+                        const r = gameState.bases[b];
+                        if (!r) return;
+                        const modal = document.getElementById(`base-context-modal-${b}`);
+                        if (modal) showModal(modal);
+                    };
+                }
             });
-            DOMElements.baseActionButtons.forEach(btn => {
-                btn.onclick = (e) => {
-                    if (gameState.isTransitioning || gameState.isGameOver) return;
-                    
-                    const modal = e.target.closest('[id^="base-context-modal-"]');
-                    if (!modal) return;
-                    const b = parseInt(modal.id.split('-').pop());
-                    const action = e.target.dataset.action;
-                    const r = gameState.bases[b];
-                    
-                    hideAllModals();
-                    if (!r || action === 'cancel') { return; }
-
-                    saveHistory();
-
-                    if (action === 'move') {
-                        const target = parseInt(e.target.dataset.base);
-                        gameState.bases[b] = null;
+            if (DOMElements.baseActionButtons) {
+                DOMElements.baseActionButtons.forEach(btn => {
+                    btn.onclick = (e) => {
+                        if (gameState.isTransitioning || gameState.isGameOver) return;
                         
-                        let currentRunner = r;
-                        let currentTarget = target;
+                        const modal = e.target.closest('[id^="base-context-modal-"]');
+                        if (!modal) return;
+                        const b = parseInt(modal.id.split('-').pop());
+                        const action = e.target.dataset.action;
+                        const r = gameState.bases[b];
                         
-                        while (currentRunner) {
-                            if (currentTarget > 3) {
-                                addRuns(1, currentRunner.name, true);
-                                currentRunner = null;
-                            } else {
-                                let displacedRunner = gameState.bases[currentTarget];
-                                gameState.bases[currentTarget] = currentRunner;
-                                currentRunner = displacedRunner;
-                                currentTarget++;
+                        hideAllModals();
+                        if (!r || action === 'cancel') { return; }
+
+                        saveHistory();
+
+                        if (action === 'move') {
+                            const target = parseInt(e.target.dataset.base);
+                            gameState.bases[b] = null;
+                            
+                            let currentRunner = r;
+                            let currentTarget = target;
+                            
+                            while (currentRunner) {
+                                if (currentTarget > 3) {
+                                    addRuns(1, currentRunner.name, true);
+                                    currentRunner = null;
+                                } else {
+                                    let displacedRunner = gameState.bases[currentTarget];
+                                    gameState.bases[currentTarget] = currentRunner;
+                                    currentRunner = displacedRunner;
+                                    currentTarget++;
+                                }
                             }
+                            addLogEntry(`${r.name} moves to ${target}.`);
+                        } else if (action === 'score') {
+                            gameState.bases[b] = null;
+                            addRuns(1, r.name, true);
+                        } else if (action === 'out') {
+                            gameState.bases[b] = null;
+                            addOut(`${r.name} out on base.`);
+                            renumberRunnersOnBase(r.displayOrder);
                         }
-                        addLogEntry(`${r.name} moves to ${target}.`);
-                    } else if (action === 'score') {
-                        gameState.bases[b] = null;
-                        addRuns(1, r.name, true);
-                    } else if (action === 'out') {
-                        gameState.bases[b] = null;
-                        addOut(`${r.name} out on base.`);
-                        renumberRunnersOnBase(r.displayOrder);
-                    }
-                    updateBases();
-                    hideAllModals();
-                };
-            });
+                        updateBases();
+                    };
+                });
+            }
         }
 
         async function initAuth() {
             onAuthStateChanged(auth, user => {
                 if (user) {
                     userId = user.uid;
-                    DOMElements.userIdDisplay.textContent = userId;
+                    if (DOMElements.userIdDisplay) DOMElements.userIdDisplay.textContent = userId;
                     rosterCollectionRef = collection(db, `artifacts/${currentAppId}/users/${userId}/roster`);
                     unsubscribeRoster = onSnapshot(rosterCollectionRef, snap => {
                         if (!snap.empty || gameState.roster.length === 0) {
-                            gameState.roster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            // Map existing and inject stats object if missing
+                            gameState.roster = snap.docs.map(d => {
+                                const data = d.data();
+                                if(!data.stats) {
+                                    data.stats = { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 };
+                                }
+                                return { id: d.id, ...data };
+                            });
                             renderRoster();
                             renderBattingOrder();
                         }
@@ -1701,16 +1941,17 @@
                 console.error("Auth error:", err);
                 useLocalRoster = true;
                 if (err.message.includes('referer') || err.message.includes('blocked')) {
-                    DOMElements.userIdDisplay.textContent = "Local Mode (API Key Blocked)";
+                    if (DOMElements.userIdDisplay) DOMElements.userIdDisplay.textContent = "Local Mode (API Key Blocked)";
                     addLogEntry("Cloud save disabled. Add *.scf.usercontent.goog/* to your API Key referer restrictions in Google Cloud to fix.", "out");
                 } else {
-                    DOMElements.userIdDisplay.textContent = "Local Mode";
+                    if (DOMElements.userIdDisplay) DOMElements.userIdDisplay.textContent = "Local Mode";
                     addLogEntry("Warning: Unable to connect to database.", "out");
                 }
             }
         }
 
         function renderRoster() {
+            if (!DOMElements.rosterList) return;
             DOMElements.rosterList.innerHTML = '';
             gameState.roster.forEach(p => {
                 const el = document.createElement('div');
@@ -1763,24 +2004,37 @@
             saveLocalState();
         }
 
-        DOMElements.addPlayerForm.onsubmit = async e => {
-            e.preventDefault();
-            const name = DOMElements.playerNameInput.value;
-            const number = DOMElements.playerNumberInput.value;
-            const pos = DOMElements.playerPositionInput.value;
-            const gender = document.querySelector('input[name="gender"]:checked').value;
-            
-            if (useLocalRoster) {
-                const newPlayer = { id: Date.now().toString(), name, number, pos, gender };
-                gameState.roster.push(newPlayer);
-                renderRoster();
-                renderBattingOrder();
-            } else {
-                if(rosterCollectionRef) await addDoc(rosterCollectionRef, { name, number, pos, gender });
-            }
-            
-            DOMElements.playerNameInput.value = ''; DOMElements.playerNumberInput.value = ''; DOMElements.playerPositionInput.value = '';
-        };
+        if (DOMElements.addPlayerForm) {
+            DOMElements.addPlayerForm.onsubmit = async e => {
+                e.preventDefault();
+                const name = DOMElements.playerNameInput ? DOMElements.playerNameInput.value : '';
+                const number = DOMElements.playerNumberInput ? DOMElements.playerNumberInput.value : '';
+                const pos = DOMElements.playerPositionInput ? DOMElements.playerPositionInput.value : '';
+                const genderEl = document.querySelector('input[name="gender"]:checked');
+                const gender = genderEl ? genderEl.value : 'male';
+                
+                const newPlayer = { 
+                    id: Date.now().toString(), 
+                    name, 
+                    number, 
+                    pos, 
+                    gender,
+                    stats: { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 } 
+                };
+
+                if (useLocalRoster) {
+                    gameState.roster.push(newPlayer);
+                    renderRoster();
+                    renderBattingOrder();
+                } else {
+                    if(rosterCollectionRef) await setDoc(doc(rosterCollectionRef, newPlayer.id), newPlayer);
+                }
+                
+                if (DOMElements.playerNameInput) DOMElements.playerNameInput.value = ''; 
+                if (DOMElements.playerNumberInput) DOMElements.playerNumberInput.value = ''; 
+                if (DOMElements.playerPositionInput) DOMElements.playerPositionInput.value = '';
+            };
+        }
 
         // NEW: Game Type Handler
         function handleGameTypeSelect(e) {
@@ -1790,8 +2044,8 @@
             gameState.settings.allowTies = (gameState.gameType === 'regular');
 
             addLogEntry(`Game type set to: ${gameState.gameType === 'regular' ? 'Regular Season' : 'Playoffs'}.`);
-            DOMElements.gameTypeModal.classList.add('hidden');
-            showModal(DOMElements.leagueTypeModal);
+            if (DOMElements.gameTypeModal) DOMElements.gameTypeModal.classList.add('hidden');
+            if (DOMElements.leagueTypeModal) showModal(DOMElements.leagueTypeModal);
             saveLocalState();
         }
 
@@ -1804,26 +2058,30 @@
             else gameState.leagueType = 'coed';
             
             addLogEntry(`League type set to: ${gameState.leagueType}.`);
-            DOMElements.leagueTypeModal.classList.add('hidden');
+            if (DOMElements.leagueTypeModal) DOMElements.leagueTypeModal.classList.add('hidden');
             
             if (gameState.leagueType === 'coed') {
-                showModal(DOMElements.gameModeModal); // Show traditional vs wheel
+                if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal); // Show traditional vs wheel
             } else {
                 // If Men's or Women's, skip mode select, default to traditional
                 gameState.gameMode = 'traditional';
                 
                 // Show standard layout
-                DOMElements.traditionalContainer.classList.remove('hidden');
-                DOMElements.traditionalContainer.classList.add('flex');
-                DOMElements.wheelOrderContainer.classList.add('hidden');
-                DOMElements.wheelOrderContainer.classList.remove('md:grid');
-                DOMElements.wheelUpNextContainer.classList.add('hidden');
+                if (DOMElements.traditionalContainer) {
+                    DOMElements.traditionalContainer.classList.remove('hidden');
+                    DOMElements.traditionalContainer.classList.add('flex');
+                }
+                if (DOMElements.wheelOrderContainer) {
+                    DOMElements.wheelOrderContainer.classList.add('hidden');
+                    DOMElements.wheelOrderContainer.classList.remove('md:grid');
+                }
+                if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.add('hidden');
                 
                 renderRoster();
                 renderBattingOrder();
                 saveLocalState();
                 
-                showModal(DOMElements.userTeamModal);
+                if (DOMElements.userTeamModal) showModal(DOMElements.userTeamModal);
             }
         }
 
@@ -1838,22 +2096,30 @@
             gameState.gameMode = mode;
             addLogEntry(`Batting style set to: ${mode}.`);
             
-            DOMElements.gameModeModal.classList.add('hidden');
+            if (DOMElements.gameModeModal) DOMElements.gameModeModal.classList.add('hidden');
             
             if (mode === 'traditional') {
-                DOMElements.traditionalContainer.classList.remove('hidden');
-                DOMElements.traditionalContainer.classList.add('flex');
-                DOMElements.wheelOrderContainer.classList.add('hidden');
-                DOMElements.wheelOrderContainer.classList.remove('md:grid');
-                DOMElements.wheelUpNextContainer.classList.add('hidden');
-                showModal(DOMElements.userTeamModal);
+                if (DOMElements.traditionalContainer) {
+                    DOMElements.traditionalContainer.classList.remove('hidden');
+                    DOMElements.traditionalContainer.classList.add('flex');
+                }
+                if (DOMElements.wheelOrderContainer) {
+                    DOMElements.wheelOrderContainer.classList.add('hidden');
+                    DOMElements.wheelOrderContainer.classList.remove('md:grid');
+                }
+                if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.add('hidden');
+                if (DOMElements.userTeamModal) showModal(DOMElements.userTeamModal);
             } else {
-                DOMElements.traditionalContainer.classList.add('hidden');
-                DOMElements.traditionalContainer.classList.remove('flex');
-                DOMElements.wheelOrderContainer.classList.remove('hidden');
-                DOMElements.wheelOrderContainer.classList.add('md:grid');
-                DOMElements.wheelUpNextContainer.classList.remove('hidden');
-                showModal(DOMElements.whoBatsFirstModal);
+                if (DOMElements.traditionalContainer) {
+                    DOMElements.traditionalContainer.classList.add('hidden');
+                    DOMElements.traditionalContainer.classList.remove('flex');
+                }
+                if (DOMElements.wheelOrderContainer) {
+                    DOMElements.wheelOrderContainer.classList.remove('hidden');
+                    DOMElements.wheelOrderContainer.classList.add('md:grid');
+                }
+                if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.remove('hidden');
+                if (DOMElements.whoBatsFirstModal) showModal(DOMElements.whoBatsFirstModal);
             }
             
             renderRoster();
@@ -1864,15 +2130,15 @@
         function handleWhoBatsFirst(e) {
             gameState.nextToBat = (e.currentTarget.id === 'start-male') ? 'male' : 'female';
             addLogEntry(`"Bat the Wheel" mode: ${gameState.nextToBat}s batting first.`);
-            DOMElements.whoBatsFirstModal.classList.add('hidden');
-            showModal(DOMElements.userTeamModal);
+            if (DOMElements.whoBatsFirstModal) DOMElements.whoBatsFirstModal.classList.add('hidden');
+            if (DOMElements.userTeamModal) showModal(DOMElements.userTeamModal);
         }
 
         function handleUserTeamSelect(e) {
             gameState.userTeam = e.currentTarget.id === 'team-home' ? 'home' : 'away';
             addLogEntry(`User team set to: ${gameState.userTeam}.`);
             
-            DOMElements.userTeamModal.classList.add('hidden');
+            if (DOMElements.userTeamModal) DOMElements.userTeamModal.classList.add('hidden');
             hideAllModals(); 
             
             updateScoreboard();
@@ -1881,64 +2147,75 @@
         }
 
         // Back Button Listeners
-        DOMElements.backFromLeagueBtn.addEventListener('click', () => {
-            gameState.gameType = null;
-            saveLocalState();
-            showModal(DOMElements.gameTypeModal);
-        });
+        if (DOMElements.backFromLeagueBtn) {
+            DOMElements.backFromLeagueBtn.addEventListener('click', () => {
+                gameState.gameType = null;
+                saveLocalState();
+                if (DOMElements.gameTypeModal) showModal(DOMElements.gameTypeModal);
+            });
+        }
 
-        DOMElements.backFromModeBtn.addEventListener('click', () => {
-            gameState.leagueType = null;
-            saveLocalState();
-            showModal(DOMElements.leagueTypeModal);
-        });
-
-        DOMElements.backFromWhoBatsBtn.addEventListener('click', () => {
-            gameState.gameMode = null;
-            saveLocalState();
-            showModal(DOMElements.gameModeModal);
-        });
-
-        DOMElements.backFromTeamBtn.addEventListener('click', () => {
-            if (gameState.leagueType === 'coed') {
-                if (gameState.gameMode === 'wheel') {
-                    gameState.nextToBat = null;
-                    showModal(DOMElements.whoBatsFirstModal);
-                } else {
-                    gameState.gameMode = null;
-                    showModal(DOMElements.gameModeModal);
-                }
-            } else {
+        if (DOMElements.backFromModeBtn) {
+            DOMElements.backFromModeBtn.addEventListener('click', () => {
                 gameState.leagueType = null;
-                showModal(DOMElements.leagueTypeModal);
-            }
-            saveLocalState();
-        });
+                saveLocalState();
+                if (DOMElements.leagueTypeModal) showModal(DOMElements.leagueTypeModal);
+            });
+        }
 
+        if (DOMElements.backFromWhoBatsBtn) {
+            DOMElements.backFromWhoBatsBtn.addEventListener('click', () => {
+                gameState.gameMode = null;
+                saveLocalState();
+                if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal);
+            });
+        }
+
+        if (DOMElements.backFromTeamBtn) {
+            DOMElements.backFromTeamBtn.addEventListener('click', () => {
+                if (gameState.leagueType === 'coed') {
+                    if (gameState.gameMode === 'wheel') {
+                        gameState.nextToBat = null;
+                        if (DOMElements.whoBatsFirstModal) showModal(DOMElements.whoBatsFirstModal);
+                    } else {
+                        gameState.gameMode = null;
+                        if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal);
+                    }
+                } else {
+                    gameState.leagueType = null;
+                    if (DOMElements.leagueTypeModal) showModal(DOMElements.leagueTypeModal);
+                }
+                saveLocalState();
+            });
+        }
 
         // Attach listeners for flow
-        DOMElements.typeRegularBtn.addEventListener('click', handleGameTypeSelect);
-        DOMElements.typePlayoffsBtn.addEventListener('click', handleGameTypeSelect);
-        DOMElements.typeMensBtn.addEventListener('click', handleLeagueTypeSelect);
-        DOMElements.typeWomensBtn.addEventListener('click', handleLeagueTypeSelect);
-        DOMElements.typeCoedBtn.addEventListener('click', handleLeagueTypeSelect);
-        DOMElements.modeTraditionalBtn.addEventListener('click', handleGameModeSelect);
-        DOMElements.modeWheelBtn.addEventListener('click', handleGameModeSelect);
-        DOMElements.startMaleBtn.addEventListener('click', handleWhoBatsFirst);
-        DOMElements.startFemaleBtn.addEventListener('click', handleWhoBatsFirst);
-        DOMElements.teamHomeBtn.addEventListener('click', handleUserTeamSelect);
-        DOMElements.teamAwayBtn.addEventListener('click', handleUserTeamSelect);
+        if (DOMElements.typeRegularBtn) DOMElements.typeRegularBtn.addEventListener('click', handleGameTypeSelect);
+        if (DOMElements.typePlayoffsBtn) DOMElements.typePlayoffsBtn.addEventListener('click', handleGameTypeSelect);
+        if (DOMElements.typeMensBtn) DOMElements.typeMensBtn.addEventListener('click', handleLeagueTypeSelect);
+        if (DOMElements.typeWomensBtn) DOMElements.typeWomensBtn.addEventListener('click', handleLeagueTypeSelect);
+        if (DOMElements.typeCoedBtn) DOMElements.typeCoedBtn.addEventListener('click', handleLeagueTypeSelect);
+        if (DOMElements.modeTraditionalBtn) DOMElements.modeTraditionalBtn.addEventListener('click', handleGameModeSelect);
+        if (DOMElements.modeWheelBtn) DOMElements.modeWheelBtn.addEventListener('click', handleGameModeSelect);
+        if (DOMElements.startMaleBtn) DOMElements.startMaleBtn.addEventListener('click', handleWhoBatsFirst);
+        if (DOMElements.startFemaleBtn) DOMElements.startFemaleBtn.addEventListener('click', handleWhoBatsFirst);
+        if (DOMElements.teamHomeBtn) DOMElements.teamHomeBtn.addEventListener('click', handleUserTeamSelect);
+        if (DOMElements.teamAwayBtn) DOMElements.teamAwayBtn.addEventListener('click', handleUserTeamSelect);
 
-        DOMElements.rosterToggleBtn.addEventListener('click', () => {
-            gameState.rosterMinimized = !gameState.rosterMinimized;
-            DOMElements.rosterToggleContent.style.maxHeight = gameState.rosterMinimized ? '0px' : '1000px';
-            DOMElements.rosterToggleContent.style.opacity = gameState.rosterMinimized ? '0' : '1';
-            DOMElements.rosterToggleBtn.textContent = gameState.rosterMinimized ? '+' : '-';
-        });
+        if (DOMElements.rosterToggleBtn) {
+            DOMElements.rosterToggleBtn.addEventListener('click', () => {
+                gameState.rosterMinimized = !gameState.rosterMinimized;
+                if (DOMElements.rosterToggleContent) {
+                    DOMElements.rosterToggleContent.style.maxHeight = gameState.rosterMinimized ? '0px' : '1000px';
+                    DOMElements.rosterToggleContent.style.opacity = gameState.rosterMinimized ? '0' : '1';
+                }
+                if (DOMElements.rosterToggleBtn) DOMElements.rosterToggleBtn.textContent = gameState.rosterMinimized ? '+' : '-';
+            });
+        }
 
-        DOMElements.gameLogToggleBtn.addEventListener('click', handleGameLogToggle);
-        DOMElements.editOrderBtn.addEventListener('click', handleEditOrderToggle);
-        DOMElements.cancelHitButton.addEventListener('click', hideAllModals);
+        if (DOMElements.gameLogToggleBtn) DOMElements.gameLogToggleBtn.addEventListener('click', handleGameLogToggle);
+        if (DOMElements.editOrderBtn) DOMElements.editOrderBtn.addEventListener('click', handleEditOrderToggle);
+        if (DOMElements.cancelHitButton) DOMElements.cancelHitButton.addEventListener('click', hideAllModals);
 
         // --- End Game & Game Over Listeners ---
         const resetGame = () => {
@@ -1955,6 +2232,7 @@
              gameState.runsThisPlay = 0;
              gameState.runnerInningCounter = 0;
              gameState.bases = { 1: null, 2: null, 3: null };
+             gameState.activePlayBatterId = null;
              
              // Reset modes
              gameState.gameType = null;
@@ -1970,10 +2248,12 @@
              
              stateHistory = [];
              localStorage.removeItem('softball_history');
-             DOMElements.btnUndo.disabled = true;
-             DOMElements.btnUndo.classList.add('opacity-50', 'cursor-not-allowed');
+             if (DOMElements.btnUndo) {
+                 DOMElements.btnUndo.disabled = true;
+                 DOMElements.btnUndo.classList.add('opacity-50', 'cursor-not-allowed');
+             }
 
-             DOMElements.gameLogList.innerHTML = '';
+             if (DOMElements.gameLogList) DOMElements.gameLogList.innerHTML = '';
              
              updateScoreboard();
              updateBases();
@@ -1981,18 +2261,20 @@
              saveLocalState();
              
              hideAllModals();
-             showModal(DOMElements.gameTypeModal); // Restart at the very beginning
+             if (DOMElements.gameTypeModal) showModal(DOMElements.gameTypeModal); // Restart at the very beginning
              addLogEntry("New Game Started.");
         };
 
-        DOMElements.btnEndGame.addEventListener('click', () => {
-            if (gameState.isTransitioning && !gameState.isGameOver) return;
-            showModal(DOMElements.endGameModal);
-        });
+        if (DOMElements.btnEndGame) {
+            DOMElements.btnEndGame.addEventListener('click', () => {
+                if (gameState.isTransitioning && !gameState.isGameOver) return;
+                if (DOMElements.endGameModal) showModal(DOMElements.endGameModal);
+            });
+        }
         
-        DOMElements.endGameYesBtn.addEventListener('click', resetGame);
-        DOMElements.endGameNoBtn.addEventListener('click', hideAllModals);
-        DOMElements.gameOverCloseBtn.addEventListener('click', resetGame);
+        if (DOMElements.endGameYesBtn) DOMElements.endGameYesBtn.addEventListener('click', resetGame);
+        if (DOMElements.endGameNoBtn) DOMElements.endGameNoBtn.addEventListener('click', hideAllModals);
+        if (DOMElements.gameOverCloseBtn) DOMElements.gameOverCloseBtn.addEventListener('click', resetGame);
 
         // --- Local Storage Functions ---
         function saveLocalState() {
@@ -2019,7 +2301,6 @@
                         gameState.settings.allowTies = true;
                     }
                     
-                    // Backward compatibility for old saves that didn't have a leagueType
                     if (!gameState.leagueType && gameState.gameMode) {
                         gameState.leagueType = 'coed'; 
                     }
@@ -2032,13 +2313,13 @@
         }
 
         function renderGameLog() {
-            DOMElements.gameLogList.innerHTML = '';
+            if (DOMElements.gameLogList) DOMElements.gameLogList.innerHTML = '';
             if (!gameState.gameLog) gameState.gameLog = [];
             gameState.gameLog.forEach(log => {
                 const entry = document.createElement('div');
                 entry.className = 'p-2 rounded bg-white shadow-sm';
                 entry.innerHTML = log.html;
-                DOMElements.gameLogList.appendChild(entry);
+                if (DOMElements.gameLogList) DOMElements.gameLogList.appendChild(entry);
             });
         }
 
@@ -2046,42 +2327,58 @@
             // 1. Restore Game Mode Containers
             if (gameState.leagueType && gameState.gameMode) {
                 if (gameState.gameMode === 'traditional') {
-                    DOMElements.traditionalContainer.classList.remove('hidden');
-                    DOMElements.traditionalContainer.classList.add('flex');
-                    DOMElements.wheelOrderContainer.classList.add('hidden');
-                    DOMElements.wheelOrderContainer.classList.remove('md:grid');
-                    DOMElements.wheelUpNextContainer.classList.add('hidden');
+                    if (DOMElements.traditionalContainer) {
+                        DOMElements.traditionalContainer.classList.remove('hidden');
+                        DOMElements.traditionalContainer.classList.add('flex');
+                    }
+                    if (DOMElements.wheelOrderContainer) {
+                        DOMElements.wheelOrderContainer.classList.add('hidden');
+                        DOMElements.wheelOrderContainer.classList.remove('md:grid');
+                    }
+                    if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.add('hidden');
                 } else {
-                    DOMElements.traditionalContainer.classList.add('hidden');
-                    DOMElements.traditionalContainer.classList.remove('flex');
-                    DOMElements.wheelOrderContainer.classList.remove('hidden');
-                    DOMElements.wheelOrderContainer.classList.add('md:grid');
-                    DOMElements.wheelUpNextContainer.classList.remove('hidden');
+                    if (DOMElements.traditionalContainer) {
+                        DOMElements.traditionalContainer.classList.add('hidden');
+                        DOMElements.traditionalContainer.classList.remove('flex');
+                    }
+                    if (DOMElements.wheelOrderContainer) {
+                        DOMElements.wheelOrderContainer.classList.remove('hidden');
+                        DOMElements.wheelOrderContainer.classList.add('md:grid');
+                    }
+                    if (DOMElements.wheelUpNextContainer) DOMElements.wheelUpNextContainer.classList.remove('hidden');
                 }
             }
 
             // 2. Restore Log Toggle state
             if (gameState.gameLogMinimized) {
-                DOMElements.gameLogToggleContent.style.maxHeight = '0px';
-                DOMElements.gameLogToggleContent.style.opacity = '0';
-                DOMElements.gameLogToggleContent.style.marginTop = '0';
-                DOMElements.gameLogToggleBtn.textContent = '+';
+                if (DOMElements.gameLogToggleContent) {
+                    DOMElements.gameLogToggleContent.style.maxHeight = '0px';
+                    DOMElements.gameLogToggleContent.style.opacity = '0';
+                    DOMElements.gameLogToggleContent.style.marginTop = '0';
+                }
+                if (DOMElements.gameLogToggleBtn) DOMElements.gameLogToggleBtn.textContent = '+';
             } else {
-                DOMElements.gameLogToggleContent.style.maxHeight = (gameState.gameLogHeight + 50) + 'px'; 
-                DOMElements.gameLogToggleContent.style.opacity = '1';
-                DOMElements.gameLogToggleContent.style.marginTop = '';
-                DOMElements.gameLogToggleBtn.textContent = '-';
+                if (DOMElements.gameLogToggleContent) {
+                    DOMElements.gameLogToggleContent.style.maxHeight = (gameState.gameLogHeight + 50) + 'px'; 
+                    DOMElements.gameLogToggleContent.style.opacity = '1';
+                    DOMElements.gameLogToggleContent.style.marginTop = '';
+                }
+                if (DOMElements.gameLogToggleBtn) DOMElements.gameLogToggleBtn.textContent = '-';
             }
 
             // 3. Restore Roster Toggle state
             if (gameState.rosterMinimized) {
-                DOMElements.rosterToggleContent.style.maxHeight = '0px';
-                DOMElements.rosterToggleContent.style.opacity = '0';
-                DOMElements.rosterToggleBtn.textContent = '+';
+                if (DOMElements.rosterToggleContent) {
+                    DOMElements.rosterToggleContent.style.maxHeight = '0px';
+                    DOMElements.rosterToggleContent.style.opacity = '0';
+                }
+                if (DOMElements.rosterToggleBtn) DOMElements.rosterToggleBtn.textContent = '+';
             } else {
-                DOMElements.rosterToggleContent.style.maxHeight = '1000px';
-                DOMElements.rosterToggleContent.style.opacity = '1';
-                DOMElements.rosterToggleBtn.textContent = '-';
+                if (DOMElements.rosterToggleContent) {
+                    DOMElements.rosterToggleContent.style.maxHeight = '1000px';
+                    DOMElements.rosterToggleContent.style.opacity = '1';
+                }
+                if (DOMElements.rosterToggleBtn) DOMElements.rosterToggleBtn.textContent = '-';
             }
         }
 
@@ -2099,15 +2396,15 @@
             if (gameState.userTeam) {
                 hideAllModals(); // Game is active
             } else if (!gameState.gameType) {
-                showModal(DOMElements.gameTypeModal); // Start at Game Type select
+                if (DOMElements.gameTypeModal) showModal(DOMElements.gameTypeModal); // Start at Game Type select
             } else if (!gameState.leagueType) {
-                showModal(DOMElements.leagueTypeModal);
+                if (DOMElements.leagueTypeModal) showModal(DOMElements.leagueTypeModal);
             } else if (gameState.leagueType === 'coed' && !gameState.gameMode) {
-                showModal(DOMElements.gameModeModal); // Needs batting style selected
+                if (DOMElements.gameModeModal) showModal(DOMElements.gameModeModal); // Needs batting style selected
             } else if (gameState.gameMode === 'wheel' && !gameState.nextToBat) {
-                showModal(DOMElements.whoBatsFirstModal); 
+                if (DOMElements.whoBatsFirstModal) showModal(DOMElements.whoBatsFirstModal); 
             } else {
-                showModal(DOMElements.userTeamModal);
+                if (DOMElements.userTeamModal) showModal(DOMElements.userTeamModal);
             }
             
             initAuth();
