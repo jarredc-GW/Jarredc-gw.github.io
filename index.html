@@ -263,22 +263,36 @@
             
             <div class="overflow-x-auto overflow-y-auto flex-grow rounded-lg border border-gray-200 mb-4">
                 <table class="min-w-full text-left text-sm whitespace-nowrap">
-                    <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-xs">
+                    <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-xs select-none">
                         <tr>
-                            <th scope="col" class="px-3 py-3 border-x border-gray-200 font-bold text-gray-700 sticky left-0 bg-gray-50 z-10">Name</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Total At Bats (Hits + Outs + Strikeouts)">TAB</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Hits">H</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Walks">W</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Strikeouts">SO</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Batting Average">BA</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Average Base Reached On Hit">BROH</th>
-                            <th scope="col" class="px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center" title="Runs Batted In">RBI</th>
+                            <th scope="col" class="stat-header cursor-pointer px-3 py-3 border-x border-gray-200 font-bold text-gray-700 sticky left-0 bg-gray-50 z-10 hover:bg-gray-100 transition-colors" data-sort="name">Name<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Total At Bats (Hits + Outs + Strikeouts + Walks)" data-sort="tab">TAB<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Hits" data-sort="h">H<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Walks" data-sort="w">W<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Strikeouts" data-sort="so">SO<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Batting Average" data-sort="ba">BA<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Average Base Reached On Hit" data-sort="broh">BROH<span class="sort-arrow ml-1 text-gray-400"></span></th>
+                            <th scope="col" class="stat-header cursor-pointer px-2 py-3 border-x border-gray-200 font-bold text-gray-700 text-center hover:bg-gray-100 transition-colors" title="Runs Batted In" data-sort="rbi">RBI<span class="sort-arrow ml-1 text-gray-400"></span></th>
                         </tr>
                     </thead>
                     <tbody id="stats-table-body" class="bg-white">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Stats Legend for Mobile understanding -->
+            <div class="flex-shrink-0 mt-1 mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
+                <p class="font-bold mb-2 border-b border-blue-200 pb-1">What do these stats mean?</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div><span class="font-bold">TAB:</span> Total At Bats</div>
+                    <div><span class="font-bold">H:</span> Hits</div>
+                    <div><span class="font-bold">W:</span> Walks</div>
+                    <div><span class="font-bold">SO:</span> Strikeouts</div>
+                    <div><span class="font-bold">BA:</span> Batting Average</div>
+                    <div><span class="font-bold">BROH:</span> Base Reached On Hit</div>
+                    <div><span class="font-bold">RBI:</span> Runs Batted In</div>
+                </div>
             </div>
 
             <div class="flex-shrink-0 border-t border-gray-200 pt-4">
@@ -621,6 +635,7 @@
         let useLocalRoster = false; 
 
         let stateHistory = []; // Tracks previous game states for undo functionality
+        let statsSortConfig = { column: 'name', direction: 'asc' }; // Used for sorting stats table
 
         let gameState = {
             homeScore: 0,
@@ -763,7 +778,7 @@
             // Settings DOM Elements
             settingsBtnMobile: document.getElementById('settings-btn-mobile'),
             settingsBtnDesktop: document.getElementById('settings-btn-desktop'),
-            settingsBtn: document.getElementById('settings-btn'), // Now part of header
+            settingsBtn: document.getElementById('settings-btn'), 
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsBtn: document.getElementById('close-settings-btn'),
             coedSettingsContainer: document.getElementById('coed-settings-container'),
@@ -1602,10 +1617,12 @@
             }
         }
 
-        function openStats() {
+        function renderStatsTable() {
+            if (!DOMElements.statsTableBody) return;
             DOMElements.statsTableBody.innerHTML = '';
             
-            gameState.roster.forEach(player => {
+            // Generate flattened stats array for sorting
+            let statsData = gameState.roster.map(player => {
                 const s = player.stats || { tab: 0, h: 0, w: 0, so: 0, tb: 0, rbi: 0 };
                 const tab = s.tab || 0;
                 const h = s.h || 0;
@@ -1614,27 +1631,75 @@
                 const tb = s.tb || 0;
                 const rbi = s.rbi || 0;
                 
-                let ba = '.000';
-                if (tab > 0) ba = (h / tab).toFixed(3).replace(/^0+/, '');
+                let ba_val = tab > 0 ? (h / tab) : 0;
+                let ba_str = ba_val.toFixed(3);
                 
-                let broh = '0.0';
-                if (h > 0) broh = (tb / h).toFixed(1);
+                let broh_val = h > 0 ? (tb / h) : 0;
+                let broh_str = broh_val.toFixed(1);
 
+                return {
+                    id: player.id,
+                    name: player.name,
+                    tab, h, w, so, rbi,
+                    ba_val, ba_str, 
+                    broh_val, broh_str
+                };
+            });
+
+            // Apply sort
+            statsData.sort((a, b) => {
+                let valA = a[statsSortConfig.column];
+                let valB = b[statsSortConfig.column];
+
+                if (statsSortConfig.column === 'ba') { valA = a.ba_val; valB = b.ba_val; }
+                if (statsSortConfig.column === 'broh') { valA = a.broh_val; valB = b.broh_val; }
+                if (statsSortConfig.column === 'name') { 
+                    valA = valA.toLowerCase(); 
+                    valB = valB.toLowerCase(); 
+                }
+
+                if (valA < valB) return statsSortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return statsSortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Update UI arrows
+            document.querySelectorAll('.stat-header').forEach(th => {
+                const sortKey = th.dataset.sort;
+                const arrowSpan = th.querySelector('.sort-arrow');
+                if (arrowSpan) {
+                    if (sortKey === statsSortConfig.column) {
+                        arrowSpan.innerHTML = statsSortConfig.direction === 'asc' ? '&uarr;' : '&darr;';
+                        arrowSpan.classList.remove('text-gray-400');
+                        arrowSpan.classList.add('text-blue-600');
+                    } else {
+                        arrowSpan.innerHTML = '';
+                        arrowSpan.classList.add('text-gray-400');
+                        arrowSpan.classList.remove('text-blue-600');
+                    }
+                }
+            });
+
+            // Render sorted rows
+            statsData.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-gray-200 hover:bg-gray-50 transition-colors";
                 tr.innerHTML = `
-                    <td class="px-3 py-3 border-x border-gray-200 font-semibold text-gray-800 sticky left-0 bg-white shadow-[1px_0_0_0_#e5e7eb]">${player.name}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${tab}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-800">${h}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${w}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${so}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-blue-600">${ba}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-700">${broh}</td>
-                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-green-600">${rbi}</td>
+                    <td class="px-3 py-3 border-x border-gray-200 font-semibold text-gray-800 sticky left-0 bg-white shadow-[1px_0_0_0_#e5e7eb]">${s.name}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${s.tab}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-800">${s.h}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${s.w}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center text-gray-600">${s.so}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-blue-600">${s.ba_str}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-medium text-gray-700">${s.broh_str}</td>
+                    <td class="px-2 py-3 border-x border-gray-200 text-center font-bold text-green-600">${s.rbi}</td>
                 `;
                 DOMElements.statsTableBody.appendChild(tr);
             });
+        }
 
+        function openStats() {
+            renderStatsTable();
             showModal(DOMElements.statsModal);
         }
 
@@ -1642,6 +1707,23 @@
         if (DOMElements.statsBtn) DOMElements.statsBtn.addEventListener('click', openStats);
         if (DOMElements.closeStatsBtn) DOMElements.closeStatsBtn.addEventListener('click', hideAllModals);
         
+        document.querySelectorAll('.stat-header').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortKey = th.dataset.sort;
+                if (!sortKey) return;
+
+                if (statsSortConfig.column === sortKey) {
+                    // Toggle direction
+                    statsSortConfig.direction = statsSortConfig.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // New column, default to desc for stats, asc for names
+                    statsSortConfig.column = sortKey;
+                    statsSortConfig.direction = sortKey === 'name' ? 'asc' : 'desc';
+                }
+                renderStatsTable();
+            });
+        });
+
         if (DOMElements.clearStatsBtn) {
             DOMElements.clearStatsBtn.addEventListener('click', () => {
                 DOMElements.clearStatsBtn.classList.add('hidden');
@@ -1728,7 +1810,7 @@
                 
                 if (batter) {
                     gameState.activePlayBatterId = batter.id;
-                    updateBatterStat(batter.id, { w: 1 });
+                    updateBatterStat(batter.id, { tab: 1, w: 1 });
                 }
 
                 const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
