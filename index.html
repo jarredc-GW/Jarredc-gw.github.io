@@ -1063,7 +1063,7 @@
                 gameState.homeScore += count;
             }
 
-            if (gameState.activePlayBatterId) {
+            if (isUserTeamAtBat() && gameState.activePlayBatterId) {
                 updateBatterStat(gameState.activePlayBatterId, { rbi: count });
             }
 
@@ -1085,7 +1085,7 @@
                     else gameState.homeScore -= overage;
                     
                     // Revert RBI if run overage negates it
-                    if (gameState.activePlayBatterId) {
+                    if (isUserTeamAtBat() && gameState.activePlayBatterId) {
                         updateBatterStat(gameState.activePlayBatterId, { rbi: -overage });
                     }
                     
@@ -1126,9 +1126,11 @@
             const hitNames = ['Single', 'Double', 'Triple', 'Home Run'];
             addLogEntry(`${batterName} hits for ${hitNames[hitType - 1]}.`, 'info');
             
-            if (batter) {
+            if (isUserTeamAtBat() && batter) {
                 gameState.activePlayBatterId = batter.id;
                 updateBatterStat(batter.id, { tab: 1, h: 1, tb: hitType });
+            } else {
+                clearActiveBatter();
             }
 
             const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
@@ -1784,7 +1786,7 @@
                 if (gameState.topOfInning) gameState.awayScore -= loss; else gameState.homeScore -= loss;
                 
                 // Remove RBI that was given erroneously on force out
-                if (gameState.activePlayBatterId) {
+                if (isUserTeamAtBat() && gameState.activePlayBatterId) {
                     updateBatterStat(gameState.activePlayBatterId, { rbi: -loss });
                 }
 
@@ -1808,9 +1810,11 @@
                 const batter = getCurrentBatter();
                 const batterName = getBatterName(batter);
                 
-                if (batter) {
+                if (isUserTeamAtBat() && batter) {
                     gameState.activePlayBatterId = batter.id;
                     updateBatterStat(batter.id, { tab: 1, w: 1 });
+                } else {
+                    clearActiveBatter();
                 }
 
                 const newRunner = { name: batterName, displayOrder: ++gameState.runnerInningCounter };
@@ -1879,9 +1883,11 @@
                 gameState.runsThisPlay = 0; 
                 
                 const batter = getCurrentBatter();
-                if (batter) {
+                if (isUserTeamAtBat() && batter) {
                     gameState.activePlayBatterId = batter.id;
                     updateBatterStat(batter.id, { tab: 1 });
+                } else {
+                    clearActiveBatter();
                 }
                 
                 const batterName = getBatterName(batter);
@@ -1918,9 +1924,11 @@
                 } else { 
                     // Strikeout
                     const batter = getCurrentBatter();
-                    if (batter) {
+                    if (isUserTeamAtBat() && batter) {
                         gameState.activePlayBatterId = batter.id;
                         updateBatterStat(batter.id, { tab: 1, so: 1 });
+                    } else {
+                        clearActiveBatter();
                     }
                     
                     if (!addOut(`${getBatterName(batter)} strikes out.`)) handleNextBatter(); 
